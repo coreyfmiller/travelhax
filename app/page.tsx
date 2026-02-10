@@ -62,6 +62,21 @@ export default function Page() {
           )}
         </div>
 
+        {user && (
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-6 text-center">
+            <h3 className="text-lg font-semibold mb-2">✨ Automatic Sync</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Forward your confirmation emails (flights, hotels, rental cars) to:
+            </p>
+            <div className="inline-block rounded-lg bg-background px-4 py-2 border border-primary/20 font-mono text-primary font-bold text-lg mb-2">
+              trips@itinery5.com
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Make sure you forward from an <strong>Approved Sender</strong> listed below.
+            </p>
+          </div>
+        )}
+
         {user && <ApprovedSenders />}
 
         <div className="relative">
