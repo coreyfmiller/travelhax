@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     const contentToParse = html || text;
 
     const geminiKey = process.env.GEMINI_API_KEY;
-    const geminiModel = 'gemini-1.5-flash-latest';
+    const geminiModel = 'gemini-2.0-flash';
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiKey}`;
 
     console.log(`🤖 Calling Gemini for extraction...`);
