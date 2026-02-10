@@ -21,7 +21,83 @@ const sampleButtons = [
   { label: "Lunch", key: "lunch" as const, icon: "M18 8h1a4 4 0 0 0 0-8h-1M2 8h16M6 1v3M10 1v3M14 1v3M2 8a5 5 0 0 0 5 5h2a5 5 0 0 0 5-5M6 15v3M14 15v3M4 18h12" },
 ];
 
-const MASTER_PROMPT = `You are a specialized Travel Confirmation Data Extraction Engine. Extract structured data in JSON format...`;
+const MASTER_PROMPT = `You are a specialized Travel Confirmation Data Extraction Engine. Your sole purpose is to analyze travel-related emails and extract structured data in JSON format.
+
+CRITICAL: You MUST output ONLY valid JSON. No explanations, no markdown, no code blocks - just pure JSON.
+
+Extract all travel details from the email and output them according to this structure:
+
+{
+  "extraction_metadata": {
+    "extracted_at": "[ISO 8601 timestamp]",
+    "email_subject": "[subject line]",
+    "confidence_score": [0.0-1.0],
+    "is_travel_related": [true/false],
+    "parser_version": "1.0"
+  },
+  "events": [
+    {
+      "event_id": "[unique ID]",
+      "event_type": "[flight|hotel|rental_car|activity|dining|other]",
+      "status": "[confirmed|cancelled|delayed|modified]",
+      "provider": {
+        "name": "[company name]",
+        "support_phone": "[phone]"
+      },
+      "confirmation": {
+        "confirmation_code": "[booking reference]",
+        "confidence": [0.0-1.0]
+      },
+      "timing": {
+        "start_datetime": "[ISO 8601 with timezone]",
+        "timezone": "[IANA timezone]"
+      },
+      "location": {
+        "name": "[location name]",
+        "address": {
+          "full_address": "[complete address]"
+        }
+      },
+      "important_notes": ["[array of important details]"],
+      "cost": {
+          "total": [number],
+          "currency": "[USD|CAD|EUR|etc]"
+      },
+      "flight_details": {
+          "airline": "[airline name]",
+          "flight_number": "[flight num]",
+          "departure_airport": { "code": "[IATA]", "gate": "[gate]" },
+          "arrival_airport": { "code": "[IATA]" },
+          "seat": "[seat]",
+          "class": "[economy|business]"
+      },
+      "accommodation_details": {
+          "check_in": "[datetime]",
+          "check_out": "[datetime]",
+          "room_type": "[string]",
+          "number_of_nights": [int],
+          "guest_name": "[string]"
+      },
+      "rental_details": {
+          "vehicle_type": "[string]",
+          "pickup_datetime": "[datetime]",
+          "dropoff_datetime": "[datetime]",
+          "pickup_location": "[string]",
+          "dropoff_location": "[string]"
+      }
+    }
+  ]
+}
+
+Rules:
+- Extract ONLY explicitly stated information
+- Use null for missing fields
+- Convert all dates to ISO 8601 format (YYYY-MM-DDTHH:MM:SS±HH:MM)
+- Assign confidence scores (1.0 = certain, 0.5 = uncertain)
+- Detect status from keywords (confirmed, cancelled, delayed)
+- Include timezone information when available
+- Output ONLY the JSON, nothing else
+`;
 
 export function EmailInput() {
   const [input, setInput] = useState("")

@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { prompt, fileData, mimeType } = await req.body?.json() || {};
+        const { prompt, fileData, mimeType } = await req.json() || {};
 
         if (!prompt && !fileData) {
             return NextResponse.json({ error: "Prompt or file data is required" }, { status: 400 });
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
         const model = 'gemini-1.5-flash';
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
 
-        const parts = [{ text: prompt }];
+        const parts: any[] = [{ text: prompt }];
 
         if (fileData && mimeType) {
             parts.push({
