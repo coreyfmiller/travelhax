@@ -46,6 +46,9 @@ export async function POST(req: NextRequest) {
 
         if (!response.ok) {
             const errorText = await response.text();
+            if (response.status === 429) {
+                return NextResponse.json({ error: "Gemini AI is busy (Rate Limit). Please wait a minute and try again." }, { status: 429 });
+            }
             throw new Error(`Gemini API Error: ${response.status} - ${errorText}`);
         }
 
