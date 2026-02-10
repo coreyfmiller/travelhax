@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import { Header } from "@/components/header"
 import { EmailInput } from "@/components/email-input"
+import { ApprovedSenders } from "@/components/approved-senders"
 import { Itinerary } from "@/components/itinerary"
 import { Button } from "@/components/ui/button"
 import { User } from "@supabase/supabase-js"
@@ -55,6 +56,8 @@ export default function Page() {
             </div>
           )}
         </div>
+
+        {user && <ApprovedSenders />}
 
         <div className="relative">
           <Itinerary />

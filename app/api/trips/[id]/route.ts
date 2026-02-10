@@ -20,15 +20,47 @@ const getSupabaseClient = (req: NextRequest) => {
 
 export async function DELETE(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const supabase = getSupabaseClient(req);
-        const { id } = params;
+        const { id } = await params;
 
         const { data, error } = await supabase
             .from("trips")
             .delete()
+            .eq("id", id)
+            .select();
+
+        if (error) throw error;
+        return NextResponse.json({ success: true, data });
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
+
+export async function PUT(
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const supabase = getSupabaseClient(req);
+        const { id } = await params;
+        const body = await req.json();
+
+        // Update the parsed_data field
+        // We assume the body contains the Full Trip Object or just the fields to update
+        // For simplicity, we'll expect { tripData: ... } or just merge the body into parsed_data
+
+        // Fetch existing trip first to merge deep data if needed, but for now let's just update specific fields
+        // or replace the parsed_data content.
+
+        const { data, error } = await supabase
+            .from("trips")
+            .update({
+                trip_name: body.trip_name,
+                parsed_data: body.parsed_data
+            })
             .eq("id", id)
             .select();
 

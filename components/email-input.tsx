@@ -6,11 +6,118 @@ import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 
 const sampleEmails = {
-  flight: `Subject: Flight Confirmation - AC123 Toronto to Vancouver\n\nDear John Smith,\n\nYour flight is confirmed!\n\nConfirmation Code: ABC123\nTicket Number: 0142345678901`,
-  hotel: `Subject: Hotel Reservation - Marriott Downtown\n\nHi John,\n\nThanks for booking with Marriott!\n\nConfirmation Number: 99887766\n\nHotel: Marriott Downtown Toronto`,
-  rental: `Subject: Car Rental Confirmation - Enterprise\n\nYour car is reserved.\n\nConfirmation Number: E12345678\n\nPickup:\nLocation: Toronto Pearson Airport (YYZ)`,
-  dinner: `Subject: Reservation Confirmed for Dinner at The Keg\n\nDear John Smith,\n\nYour table is reserved!\n\nRestaurant: The Keg Steakhouse`,
-  lunch: `Subject: Lunch Reservation - Momofuku Noodle Bar\n\nHi John,\n\nRestaurant: Momofuku Noodle Bar\nDate: Sunday, March 17, 2026`,
+  flight: `Subject: Flight Confirmation - AC123 Toronto to Vancouver
+
+Dear John Smith,
+
+Your flight booking is confirmed.
+
+Booking Reference: ABC123
+Airline: Air Canada
+
+Flight: AC123
+Date: Monday, October 23, 2026
+Depart: Toronto Pearson (YYZ) at 08:00 AM (Terminal 1)
+Arrive: Vancouver Int'l (YVR) at 10:15 AM (Main Terminal)
+Duration: 5h 15m
+Class: Economy (K)
+Seat: 12A
+
+Passenger: John Smith
+Ticket Number: 0142345678901
+
+Cost Breakdown:
+Base Fare: $450.00 CAD
+Taxes & Fees: $125.50 CAD
+Total Paid: $575.50 CAD
+
+Baggage Allowance: 1 Carry-on, 1 Checked Bag (23kg)
+
+Manage your booking at aircanada.com`,
+  hotel: `Subject: Hotel Reservation Confirmed - Marriott Downtown Toronto
+
+Hi John,
+
+Thanks for booking with Marriott! We look forward to seeing you.
+
+Confirmation Number: 99887766
+Hotel: Marriott Downtown Toronto
+Address: 525 Bay Street, Toronto, ON M5G 2L2
+Phone: +1 416-597-9200
+
+Check-in: Monday, October 23, 2026 (3:00 PM)
+Check-out: Friday, October 27, 2026 (12:00 PM)
+Nights: 4
+Guests: 1 Adult
+
+Room Type: Deluxe King, City View
+Rate: $289.00 CAD / night
+
+Summary of Charges:
+Room Rate: $1,156.00
+Taxes: $150.28
+Total Estimated Cost: $1,306.28 CAD
+
+Cancellation Policy: Cancel by 6:00 PM on Oct 22 to avoid penalty.`,
+  rental: `Subject: Car Rental Confirmation - Enterprise
+
+Your car is reserved.
+
+Confirmation Number: E12345678
+Renter: John Smith
+Vehicle: Intermediate SUV (Toyota RAV4 or similar)
+
+Pick-up:
+Location: Toronto Pearson Airport (YYZ)
+Date: Monday, October 23, 2026
+Time: 11:00 AM
+
+Return:
+Location: Toronto Pearson Airport (YYZ)
+Date: Friday, October 27, 2026
+Time: 9:00 AM
+
+Estimated Total: $425.50 CAD
+Includes: Unlimited Kilometers, Collision Damage Waiver
+
+Counter Location: In Terminal
+Open 24 Hours`,
+  dinner: `Subject: Reservation Confirmed for Dinner at The Keg
+
+Dear John Smith,
+
+Your table is reserved! We look forward to serving you.
+
+Restaurant: The Keg Steakhouse + Bar - York Street
+Address: 165 York St, Toronto, ON M5H 3R8
+
+Date: Tuesday, October 24, 2026
+Time: 7:30 PM
+Guests: 2
+
+Confirmation #: 554433
+Occasion: Business Dinner
+Seating Preference: Booth (Subject to availability)
+
+Please note: We hold reservations for 15 minutes.
+To modify or cancel, please call (416) 367-0685.`,
+  lunch: `Subject: Lunch Reservation - Momofuku Noodle Bar
+
+Hi John,
+
+Your reservation at Momofuku Noodle Bar Toronto is confirmed.
+
+Date: Wednesday, October 25, 2026
+Time: 12:30 PM
+Party Size: 4 People
+
+Address: 190 University Ave, Toronto, ON M5H 0A3
+Confirmation ID: MF-98765
+
+Notes: No severe allergies.
+
+See you soon!
+Momofuku Team`,
 };
 
 const sampleButtons = [
@@ -183,10 +290,10 @@ export function EmailInput() {
         </div>
         <div className="flex gap-2">
           <input type="file" id="file-upload" className="hidden" accept="application/pdf" onChange={handleFile} />
-          <Button variant="outline" size="sm" onClick={() => document.getElementById("file-upload")?.click()}>
+          <Button variant="outline" onClick={() => document.getElementById("file-upload")?.click()} className="w-32">
             {selectedFile ? "Change PDF" : "Upload PDF"}
           </Button>
-          <Button onClick={handleParse} disabled={loading}>
+          <Button onClick={handleParse} disabled={loading} className="w-32">
             {loading ? "Parsing..." : "Parse Email"}
           </Button>
         </div>

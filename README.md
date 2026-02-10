@@ -1,4 +1,4 @@
-# TravelHax - Email-to-Itinerary Parser
+# Itinery5 - Email-to-Itinerary Parser
 
 Transform messy travel confirmation emails into structured, beautiful itineraries.
 

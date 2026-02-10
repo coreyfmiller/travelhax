@@ -8,7 +8,7 @@ const _inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const _jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains-mono' })
 
 export const metadata: Metadata = {
-  title: 'TravelHax0r5000 - Smart Travel Itinerary Parser',
+  title: 'Itinery5 - Smart Travel Itinerary Parser',
   description: 'Transform travel confirmation emails into structured itinerary data',
 }
 

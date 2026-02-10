@@ -66,7 +66,7 @@ Your Gemini Pro subscription is for the **chat interface** (gemini.google.com). 
 - **Solution**: Use a local web server (see below)
 
 ### Running a Local Web Server
-If you get CORS errors, run this in your TravelHax folder:
+If you get CORS errors, run this in your Itinery5 folder:
 
 **Option 1 - Python** (if installed):
 ```bash
