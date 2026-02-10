@@ -17,8 +17,9 @@ export async function POST(req: NextRequest) {
         const key = process.env.GEMINI_API_KEY;
         console.log("API Key Status:", key ? "Defined (starts with " + key.substring(0, 4) + ")" : "Undefined");
 
-        const model = 'gemini-1.5-flash-latest';
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+        const model = 'gemini-1.5-flash';
+        const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${key}`;
+        console.log("Calling Gemini URL:", url.replace(key || "", "HIDDEN_KEY"));
 
         const parts: any[] = [{ text: prompt }];
 
