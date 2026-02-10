@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Plans - V2 Design</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: ["class"],
+            theme: {
+                container: {
+                    center: true,
+                    padding: "2rem",
+                    screens: {
+                        "2xl": "1400px",
+                    },
+                },
+                extend: {
+                    colors: {
+                        border: "hsl(var(--border))",
+                        input: "hsl(var(--input))",
+                        ring: "hsl(var(--ring))",
+                        background: "hsl(var(--background))",
+                        foreground: "hsl(var(--foreground))",
+                        primary: {
+                            DEFAULT: "hsl(var(--primary))",
+                            foreground: "hsl(var(--primary-foreground))",
+                        },
+                        secondary: {
+                            DEFAULT: "hsl(var(--secondary))",
+                            foreground: "hsl(var(--secondary-foreground))",
+                        },
+                        destructive: {
+                            DEFAULT: "hsl(var(--destructive))",
+                            foreground: "hsl(var(--destructive-foreground))",
+                        },
+                        muted: {
+                            DEFAULT: "hsl(var(--muted))",
+                            foreground: "hsl(var(--muted-foreground))",
+                        },
+                        accent: {
+                            DEFAULT: "hsl(var(--accent))",
+                            foreground: "hsl(var(--accent-foreground))",
+                        },
+                        popover: {
+                            DEFAULT: "hsl(var(--popover))",
+                            foreground: "hsl(var(--popover-foreground))",
+                        },
+                        card: {
+                            DEFAULT: "hsl(var(--card))",
+                            foreground: "hsl(var(--card-foreground))",
+                        },
+                    },
+                    borderRadius: {
+                        lg: "var(--radius)",
+                        md: "calc(var(--radius) - 2px)",
+                        sm: "calc(var(--radius) - 4px)",
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        :root {
+            --background: 220 20% 97%;
+            --foreground: 220 20% 10%;
+            --card: 0 0% 100%;
+            --card-foreground: 220 20% 10%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 220 20% 10%;
+            --primary: 220 70% 50%;
+            --primary-foreground: 0 0% 100%;
+            --secondary: 220 15% 93%;
+            --secondary-foreground: 220 20% 20%;
+            --muted: 220 15% 93%;
+            --muted-foreground: 220 10% 45%;
+            --accent: 160 60% 45%;
+            --accent-foreground: 0 0% 100%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 0 0% 98%;
+            --border: 220 15% 90%;
+            --input: 220 15% 90%;
+            --ring: 220 70% 50%;
+            --radius: 0.75rem;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-background text-foreground">
+
+    <!-- Header -->
+    <header class="border-b border-border bg-card">
+        <div class="mx-auto flex max-w-4xl items-center justify-between px-4 py-5">
+            <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" class="text-primary-foreground">
+                        <path
+                            d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-card-foreground">Travel Plans</h1>
+                    <p class="text-sm text-muted-foreground">Transform confirmation emails into structured data</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="authSection">
+                    <button onclick="openAuthModal()" id="loginBtn"
+                        class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-card-foreground transition-colors hover:bg-secondary">
+                        Sign In
+                    </button>
+                    <div id="userProfile" class="hidden flex items-center gap-3">
+                        <span id="userEmail" class="text-xs font-medium text-muted-foreground mr-1"></span>
+                        <button onclick="handleSignOut()"
+                            class="text-xs font-semibold text-muted-foreground hover:text-destructive transition-colors">Sign
+                            Out</button>
+                    </div>
+                </div>
+                <span
+                    class="hidden rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground sm:inline-flex">Beta</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="mx-auto max-w-4xl px-4 py-8 flex flex-col gap-8">
+
+        <!-- Email Input Section -->
+        <section class="overflow-hidden rounded-xl border border-border bg-card shadow-sm" id="emailInputSection">
+            <div class="flex items-center justify-between border-b border-border px-6 py-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                            <rect width="20" height="16" x="2" y="4" rx="2" />
+                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                        </svg>
+                    </div>
+                    <h2 class="text-sm font-semibold tracking-wide uppercase text-card-foreground">Email Input</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="file" id="fileInput" accept="application/pdf" class="hidden"
+                        onchange="handleFileSelect(event)">
+                    <button onclick="document.getElementById('fileInput').click()" id="uploadBtn"
+                        class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-card-foreground transition-colors hover:bg-secondary">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="17 8 12 3 7 8" />
+                            <line x1="12" x2="12" y1="3" y2="15" />
+                        </svg>
+                        Upload PDF
+                    </button>
+                    <button onclick="parseEmail()" id="parseBtn"
+                        class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                        </svg>
+                        Parse
+                    </button>
+                </div>
+            </div>
+            <div id="fileInfo"
+                class="hidden px-6 py-2 bg-primary/5 border-b border-border text-xs font-medium text-primary flex items-center justify-between">
+                <span id="fileName">No file selected</span>
+                <button onclick="clearFile()"
+                    class="text-muted-foreground hover:text-destructive transition-colors">✕</button>
+            </div>
+
+            <!-- Email Input Content -->
+            <div class="relative">
+                <!-- Guest Overlay -->
+                <div id="guestOverlay"
+                    class="absolute inset-0 z-10 hidden flex items-center justify-center bg-card/60 backdrop-blur-[2px] px-6 text-center transition-all duration-300">
+                    <div class="max-w-xs animate-in fade-in zoom-in duration-500">
+                        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mb-5">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <line x1="19" y1="8" x2="19" y2="14" />
+                                <line x1="16" y1="11" x2="22" y2="11" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-card-foreground mb-2">Create account first</h3>
+                        <p class="text-sm text-muted-foreground mb-8">Join Travel Plans to transform emails and PDFs
+                            into structured itineraries.</p>
+                        <button onclick="openAuthModal()"
+                            class="inline-flex items-center gap-2 rounded-lg bg-primary px-8 py-3 text-sm font-bold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98]">
+                            Get Started
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sample buttons -->
+                <div class="border-b border-border bg-secondary/50 px-6 py-3">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="mr-1 text-xs font-medium text-muted-foreground">Samples:</span>
+                        <button onclick="loadSample('flight')"
+                            class="sample-btn inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-card-foreground transition-colors hover:bg-secondary">Flight</button>
+                        <button onclick="loadSample('hotel')"
+                            class="sample-btn inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-card-foreground transition-colors hover:bg-secondary">Hotel</button>
+                        <button onclick="loadSample('rental')"
+                            class="sample-btn inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-card-foreground transition-colors hover:bg-secondary">Rental</button>
+                        <button onclick="loadSample('dinner')"
+                            class="sample-btn inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-card-foreground transition-colors hover:bg-secondary">Dinner</button>
+                        <button onclick="loadSample('lunch')"
+                            class="sample-btn inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-card-foreground transition-colors hover:bg-secondary">Lunch</button>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <textarea id="emailInput" rows="8" placeholder="Paste your travel confirmation email here..."
+                        class="w-full resize-y rounded-lg border border-border bg-background px-4 py-3 font-mono text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"></textarea>
+                </div>
+            </div>
+        </section>
+
+        <!-- Itinerary Section -->
+        <section class="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+            <div class="flex items-center justify-between border-b border-border px-6 py-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="flex h-7 w-7 items-center justify-center rounded-md bg-accent/15">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="text-accent-foreground">
+                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+                        </svg>
+                    </div>
+                    <h2 class="text-sm font-semibold tracking-wide uppercase text-card-foreground">My Itinerary</h2>
+                    <span id="tripCount"
+                        class="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary hidden">0
+                        items</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="openAddTripModal()"
+                        class="text-xs font-semibold uppercase tracking-wide text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" x2="12" y1="8" y2="16" />
+                            <line x1="8" x2="16" y1="12" y2="12" />
+                        </svg>
+                        Add Event
+                    </button>
+                    <div class="w-px h-4 bg-border"></div>
+                    <button onclick="window.print()"
+                        class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium text-card-foreground transition-colors hover:bg-secondary">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 6 2 18 2 18 9" />
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                            <rect width="12" height="8" x="6" y="14" />
+                        </svg>
+                        Print
+                    </button>
+                </div>
+            </div>
+
+            <!-- Itinerary content -->
+            <div id="tripsList" class="flex flex-col gap-8 p-6">
+                <!-- Trips will be injected here by parser-v2.js -->
+                <p class="text-muted-foreground italic text-center">Loading trips...</p>
+            </div>
+
+            <div class="p-4 border-t border-border bg-secondary/20 flex justify-center">
+                <button onclick="loadTrips()"
+                    class="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Refresh
+                    List</button>
+            </div>
+        </section>
+
+        <!-- Hidden JSON Output for debugging/verification if needed -->
+        <div id="jsonOutput" style="display:none"></div>
+        <div id="loading" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div class="bg-white p-4 rounded-lg flex items-center gap-3">
+                <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                <span>Parsing...</span>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Edit Modal (Simplified for V2) -->
+    <div id="editModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black/50 backdrop-blur-sm">
+        <div class="flex min-h-screen items-start justify-center p-4 text-center sm:p-0 py-12">
+            <div
+                class="relative w-full max-w-2xl transform overflow-hidden rounded-xl bg-card text-left shadow-xl transition-all border border-border my-8">
+                <div class="p-6 border-b border-border flex justify-between items-center bg-secondary/30 rounded-t-xl">
+                    <h3 class="text-lg font-bold text-foreground">✏️ Edit Details</h3>
+                    <button onclick="closeEditModal()"
+                        class="text-muted-foreground hover:text-foreground transition-colors">✕</button>
+                </div>
+                <div class="p-6">
+                    <!-- Dynamic Form Container -->
+                    <form id="editForm" class="space-y-4">
+                        <!-- Fields injected by JS -->
+                    </form>
+                </div>
+                <div class="p-6 border-t border-border bg-secondary/30 rounded-b-xl flex justify-end gap-3">
+                    <button onclick="closeEditModal()"
+                        class="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
+                    <button onclick="saveEdit()"
+                        class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-medium text-sm transition-colors shadow-sm">Save
+                        Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="fixed inset-0 z-[60] hidden overflow-y-auto bg-black/50 backdrop-blur-sm">
+        <div class="flex min-h-screen items-center justify-center p-4">
+            <div
+                class="relative w-full max-w-md transform overflow-hidden rounded-xl bg-card p-8 shadow-xl border border-border">
+                <div class="text-center mb-8">
+                    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                    </div>
+                    <h2 id="authTitle" class="text-2xl font-bold text-card-foreground">Welcome Back</h2>
+                    <p id="authSubtitle" class="text-sm text-muted-foreground mt-2">Sign in to manage your travel plans
+                    </p>
+                </div>
+
+                <form id="authForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-muted-foreground mb-1">Email Address</label>
+                        <input type="email" id="authEmail" required
+                            class="w-full px-4 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-muted-foreground mb-1">Password</label>
+                        <input type="password" id="authPassword" required minlength="6"
+                            class="w-full px-4 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
+                    </div>
+                    <button type="submit" id="authSubmitBtn"
+                        class="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2.5 rounded-lg font-bold transition-all shadow-md mt-2">
+                        Sign In
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <button onclick="toggleAuthMode()" id="authModeToggle"
+                        class="text-sm text-primary hover:underline font-medium">
+                        Don't have an account? Sign up
+                    </button>
+                </div>
+
+                <button onclick="closeAuthModal()"
+                    class="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="parser.js?v=04"></script>
+</body>
+
+</html>

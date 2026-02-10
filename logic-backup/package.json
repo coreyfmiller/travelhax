@@ -1,0 +1,20 @@
+{
+  "name": "travelhax",
+  "version": "1.0.0",
+  "description": "Transform messy travel confirmation emails into structured, beautiful itineraries.",
+  "main": "config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.4",
+    "express": "^5.2.1",
+    "node-fetch": "^3.3.2"
+  }
+}
