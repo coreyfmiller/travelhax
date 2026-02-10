@@ -1,4 +1,4 @@
-# Itinery5 - Email-to-Itinerary Parser
+# Travel Itinerary 5000 - Email-to-Itinerary Parser
 
 Transform messy travel confirmation emails into structured, beautiful itineraries.
 
