@@ -120,8 +120,29 @@ export function Itinerary() {
 
   useEffect(() => {
     fetchTrips()
+
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'trips'
+        },
+        () => {
+          console.log('🔄 Real-time update: Refreshing trips...')
+          fetchTrips()
+        }
+      )
+      .subscribe()
+
     window.addEventListener("refresh-trips", fetchTrips)
-    return () => window.removeEventListener("refresh-trips", fetchTrips)
+    return () => {
+      window.removeEventListener("refresh-trips", fetchTrips)
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   const handleDelete = async (id: string) => {
