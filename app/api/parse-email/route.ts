@@ -8,13 +8,16 @@ export async function POST(req: NextRequest) {
         }
 
         const { prompt, fileData, mimeType } = await req.json() || {};
+        console.log("Parsing Request:", { hasPrompt: !!prompt, hasFile: !!fileData, mimeType });
 
         if (!prompt && !fileData) {
             return NextResponse.json({ error: "Prompt or file data is required" }, { status: 400 });
         }
 
         const key = process.env.GEMINI_API_KEY;
-        const model = 'gemini-1.5-flash';
+        console.log("API Key Status:", key ? "Defined (starts with " + key.substring(0, 4) + ")" : "Undefined");
+
+        const model = 'gemini-1.5-flash-latest';
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
 
         const parts: any[] = [{ text: prompt }];
