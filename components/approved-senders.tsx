@@ -109,7 +109,7 @@ export function ApprovedSenders() {
                     <div className="flex-1 max-w-sm">
                         <div className="flex gap-2">
                             <Input
-                                placeholder="Add your sending email..."
+                                placeholder="Add a trusted email address..."
                                 value={newEmail}
                                 onChange={(e) => setNewEmail(e.target.value)}
                                 className="h-9 text-sm"
@@ -119,8 +119,8 @@ export function ApprovedSenders() {
                                 Add
                             </Button>
                         </div>
-                        <p className="text-[10px] text-muted-foreground mt-1 px-1">
-                            Only emails from these addresses will be parsed.
+                        <p className="text-[10px] text-muted-foreground mt-1 px-1 leading-tight">
+                            Add any email (yours, family, assistants) that will forward trips to you.
                         </p>
                     </div>
                 </div>
@@ -128,6 +128,10 @@ export function ApprovedSenders() {
 
             <div className="p-4 bg-card/50">
                 <div className="flex flex-wrap gap-2">
+                    <div className="w-full flex items-center gap-2 mb-1 px-1">
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Trusted Senders</span>
+                        <div className="h-px flex-1 bg-border/50" />
+                    </div>
                     {senders.map((sender) => (
                         <div key={sender.id} className="flex items-center gap-2 px-3 py-1 bg-background border border-border rounded-full group">
                             <span className="text-xs font-medium">{sender.email_address}</span>
