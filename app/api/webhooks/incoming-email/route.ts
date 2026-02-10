@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     const contentToParse = html || text;
 
     // Use the same prompt logic as the manual parse, but simplified for backend
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
     const prompt = `
         Extract travel details from this email.
         Return a JSON object with this structure:
