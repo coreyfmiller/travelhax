@@ -6,69 +6,64 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(req: NextRequest) {
-    console.log("📨 Received inbound email webhook");
+  console.log("📨 Received inbound email webhook");
 
-    try {
-        // Parse multipart/form-data
-        const formData = await req.formData();
-        const from = formData.get("from") as string;
-        const subject = formData.get("subject") as string;
-        const html = formData.get("html") as string;
-        const text = formData.get("text") as string;
+  try {
+    // Parse multipart/form-data
+    const formData = await req.formData();
+    const from = formData.get("from") as string;
+    const subject = formData.get("subject") as string;
+    const html = formData.get("html") as string;
+    const text = formData.get("text") as string;
 
-        console.log(`📧 From: ${from}, Subject: ${subject}`);
+    console.log(`📧 From: ${from}, Subject: ${subject}`);
 
-        if (!from) {
-            return NextResponse.json({ error: "Missing 'from' field" }, { status: 400 });
-        }
+    if (!from) {
+      return NextResponse.json({ error: "Missing 'from' field" }, { status: 400 });
+    }
 
-        // 1. Verify Sender
-        // specific sender matching logic: Extract email from "Name <email@domain.com>" format
-        const emailMatch = from.match(/<(.+)>/);
-        const senderEmail = emailMatch ? emailMatch[1] : from.trim();
+    // 1. Verify Sender
+    // specific sender matching logic: Extract email from "Name <email@domain.com>" format
+    const emailMatch = from.match(/<(.+)>/);
+    const senderEmail = (emailMatch ? emailMatch[1] : from).trim().toLowerCase();
 
-        // Get Supabase admin client (needs service role key ideally, but for now we use anon key + RLS or just check public table if RLS allows public read?)
-        // WAIT: RLS prevents reading other users' data with anon key.
-        // We need a SERVICE_ROLE_KEY to lookup the user by email globally.
-        // Or we can query `user_email_senders` if we have a policy allowing public read of email_address to find user_id? 
-        // Better: Use Service Role. For now, let's assume we have it or use a public lookup.
-        // ACTUALLY: user_email_senders has RLS "Users can view their own". 
-        // The webhook is unauthenticated. We NEED the service role key to find the user.
+    console.log(`🔍 Checking authorized sender: ${senderEmail}`);
 
-        // Check for service role key
-        const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-        if (!SUPABASE_SERVICE_ROLE_KEY) {
-            console.error("❌ Missing SUPABASE_SERVICE_ROLE_KEY");
-            return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
-        }
+    // Check for service role key
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("❌ Missing SUPABASE_SERVICE_ROLE_KEY");
+      return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+    }
 
-        // Create admin client
-        const { createClient } = require('@supabase/supabase-js');
-        const supabaseAdmin = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            SUPABASE_SERVICE_ROLE_KEY
-        );
+    // Create admin client
+    const { createClient } = require('@supabase/supabase-js');
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      SUPABASE_SERVICE_ROLE_KEY
+    );
 
-        const { data: senderData, error: senderError } = await supabaseAdmin
-            .from("user_email_senders")
-            .select("user_id")
-            .eq("email_address", senderEmail)
-            .single();
+    // Case-insensitive lookup using ilike
+    const { data: senderData, error: senderError } = await supabaseAdmin
+      .from("user_email_senders")
+      .select("user_id")
+      .ilike("email_address", senderEmail)
+      .single();
 
-        if (senderError || !senderData) {
-            console.log(`⚠️ Sender not found or verified: ${senderEmail}`);
-            return NextResponse.json({ error: "Sender not authorized" }, { status: 403 });
-        }
+    if (senderError || !senderData) {
+      console.log(`⚠️ Sender not found or verified: ${senderEmail}. Error: ${senderError?.message}`);
+      return NextResponse.json({ error: "Sender not authorized" }, { status: 403 });
+    }
 
-        const userId = senderData.user_id;
-        console.log(`✅ Identified User ID: ${userId}`);
+    const userId = senderData.user_id;
+    console.log(`✅ Identified User ID: ${userId}`);
 
-        // 2. Parse Email Content with Gemini
-        const contentToParse = html || text;
+    // 2. Parse Email Content with Gemini
+    const contentToParse = html || text;
 
-        // Use the same prompt logic as the manual parse, but simplified for backend
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
-        const prompt = `
+    // Use the same prompt logic as the manual parse, but simplified for backend
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const prompt = `
         Extract travel details from this email.
         Return a JSON object with this structure:
         {
@@ -119,58 +114,58 @@ export async function POST(req: NextRequest) {
         ${contentToParse.substring(0, 20000)} // Truncate to avoid token limits
         `;
 
-        const result = await model.generateContent(prompt);
-        const responseText = result.response.text();
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
 
-        // Extract JSON
-        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-            throw new Error("Failed to extract JSON from Gemini response");
-        }
-
-        const parsedData = JSON.parse(jsonMatch[0]); // TODO: safeParse
-
-        // 3. Save to Database
-        // We need duplicate check logic here too, similar to manual add
-        // For simplicity, we'll just insert for now and let the key constraints handle it if implemented, 
-        // or just add it (user can delete dupes).
-
-        // Helper to format trip name
-        const firstEvent = parsedData.events?.[0] || {};
-        let tripName = subject;
-        if (firstEvent.event_type === 'flight') {
-            tripName = `Flight to ${firstEvent.location?.name || firstEvent.flight_details?.arrival_airport || 'Destination'}`;
-        } else if (firstEvent.event_type === 'hotel') {
-            tripName = `Stay at ${firstEvent.location?.name || 'Hotel'}`;
-        }
-
-        const { data: trip, error: tripError } = await supabaseAdmin
-            .from("trips")
-            .insert([{
-                user_id: userId,
-                trip_name: tripName,
-                parsed_data: {
-                    ...parsedData,
-                    extraction_metadata: {
-                        source: "email_forward",
-                        email_subject: subject,
-                        sender: senderEmail,
-                        extracted_at: new Date().toISOString()
-                    }
-                }
-            }])
-            .select();
-
-        if (tripError) {
-            console.error("Failed to insert trip:", tripError);
-            throw tripError;
-        }
-
-        console.log(`🎉 Trip saved successfully: ${trip[0].id}`);
-        return NextResponse.json({ success: true, tripId: trip[0].id });
-
-    } catch (error: any) {
-        console.error("Webhook Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    // Extract JSON
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error("Failed to extract JSON from Gemini response");
     }
+
+    const parsedData = JSON.parse(jsonMatch[0]); // TODO: safeParse
+
+    // 3. Save to Database
+    // We need duplicate check logic here too, similar to manual add
+    // For simplicity, we'll just insert for now and let the key constraints handle it if implemented, 
+    // or just add it (user can delete dupes).
+
+    // Helper to format trip name
+    const firstEvent = parsedData.events?.[0] || {};
+    let tripName = subject;
+    if (firstEvent.event_type === 'flight') {
+      tripName = `Flight to ${firstEvent.location?.name || firstEvent.flight_details?.arrival_airport || 'Destination'}`;
+    } else if (firstEvent.event_type === 'hotel') {
+      tripName = `Stay at ${firstEvent.location?.name || 'Hotel'}`;
+    }
+
+    const { data: trip, error: tripError } = await supabaseAdmin
+      .from("trips")
+      .insert([{
+        user_id: userId,
+        trip_name: tripName,
+        parsed_data: {
+          ...parsedData,
+          extraction_metadata: {
+            source: "email_forward",
+            email_subject: subject,
+            sender: senderEmail,
+            extracted_at: new Date().toISOString()
+          }
+        }
+      }])
+      .select();
+
+    if (tripError) {
+      console.error("Failed to insert trip:", tripError);
+      throw tripError;
+    }
+
+    console.log(`🎉 Trip saved successfully: ${trip[0].id}`);
+    return NextResponse.json({ success: true, tripId: trip[0].id });
+
+  } catch (error: any) {
+    console.error("Webhook Error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
