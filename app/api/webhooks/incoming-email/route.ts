@@ -61,8 +61,12 @@ export async function POST(req: NextRequest) {
     // 2. Parse Email Content with Gemini
     const contentToParse = html || text;
 
-    // Use the same prompt logic as the manual parse, but simplified for backend
-    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+    const geminiKey = process.env.GEMINI_API_KEY;
+    const geminiModel = 'gemini-flash-latest';
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiKey}`;
+
+    console.log(`🤖 Calling Gemini for extraction...`);
+
     const prompt = `
         Extract travel details from this email.
         Return a JSON object with this structure:
@@ -111,11 +115,24 @@ export async function POST(req: NextRequest) {
         - If specific details are missing, omit the field or use null.
         
         Email Content:
-        ${contentToParse.substring(0, 20000)} // Truncate to avoid token limits
+        ${contentToParse.substring(0, 20000)}
         `;
 
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
+    const geminiResponse = await fetch(geminiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    });
+
+    if (!geminiResponse.ok) {
+      const errorText = await geminiResponse.text();
+      throw new Error(`Gemini API Error: ${geminiResponse.status} - ${errorText}`);
+    }
+
+    const geminiData = await geminiResponse.json();
+    const responseText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
     // Extract JSON
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
@@ -123,7 +140,7 @@ export async function POST(req: NextRequest) {
       throw new Error("Failed to extract JSON from Gemini response");
     }
 
-    const parsedData = JSON.parse(jsonMatch[0]); // TODO: safeParse
+    const parsedData = JSON.parse(jsonMatch[0]);
 
     // 3. Save to Database
     // We need duplicate check logic here too, similar to manual add
