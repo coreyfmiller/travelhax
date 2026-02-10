@@ -236,7 +236,10 @@ export function EmailInput() {
         body: JSON.stringify(payload)
       })
 
-      if (!response.ok) throw new Error("Server Error")
+      if (!response.ok) {
+        const errData = await response.json()
+        throw new Error(errData.error || "Server Error")
+      }
 
       const data = await response.json()
       const aiResponse = data.candidates[0].content.parts[0].text
