@@ -83,39 +83,14 @@ export function ApprovedSenders() {
     return (
         <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
             <div className="bg-primary/5 p-5 border-b border-border">
-                <div className="flex items-center gap-2 mb-6">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <Mail size={18} />
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary shadow-sm border border-primary/20">
+                        <Mail size={22} />
                     </div>
-                    <h3 className="font-bold text-lg tracking-tight">Automatic Sync Setup</h3>
+                    <h3 className="font-extrabold text-2xl tracking-tight">Setup Instructions</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                    {/* Step 2: Forwarding Email */}
-                    <div className="flex flex-col gap-3">
-                        <div className="flex items-center gap-2">
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">2</span>
-                            <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Forward your travels</p>
-                        </div>
-                        <div className="rounded-lg bg-background border border-primary/20 p-4 shadow-sm">
-                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mb-2 px-1">Send emails to:</p>
-                            <div className="flex items-center justify-between gap-2">
-                                <code className="text-sm font-bold text-primary bg-primary/5 px-3 py-1.5 rounded-md border border-primary/10 select-all">
-                                    {forwardingEmail}
-                                </code>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-9 gap-2 font-medium"
-                                    onClick={copyToClipboard}
-                                >
-                                    {copying ? <Check size={14} className="text-green-500" /> : <Clipboard size={14} />}
-                                    {copying ? "Copied" : "Copy"}
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-
                     {/* Step 1: Add Senders */}
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-2">
@@ -138,6 +113,31 @@ export function ApprovedSenders() {
                             <p className="text-[10px] text-muted-foreground leading-relaxed italic">
                                 Add any address (yours, family, or assistant) that will be forwarding travel emails to your account.
                             </p>
+                        </div>
+                    </div>
+
+                    {/* Step 2: Forwarding Email */}
+                    <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">2</span>
+                            <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Forward your travels</p>
+                        </div>
+                        <div className="rounded-lg bg-background border border-primary/20 p-4 shadow-sm">
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mb-2 px-1">Send emails to:</p>
+                            <div className="flex items-center justify-between gap-2">
+                                <code className="text-sm font-bold text-primary bg-primary/5 px-3 py-1.5 rounded-md border border-primary/10 select-all">
+                                    {forwardingEmail}
+                                </code>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-9 gap-2 font-medium"
+                                    onClick={copyToClipboard}
+                                >
+                                    {copying ? <Check size={14} className="text-green-500" /> : <Clipboard size={14} />}
+                                    {copying ? "Copied" : "Copy"}
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </div>
