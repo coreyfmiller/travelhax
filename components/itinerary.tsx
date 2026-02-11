@@ -107,8 +107,14 @@ export function Itinerary() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
 
+      console.log('🔄 [Itinerary] Fetching trips...')
       const response = await fetch("/api/trips", {
-        headers: { "Authorization": `Bearer ${session.access_token}` }
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+          "Cache-Control": "no-cache",
+          "Pragma": "no-cache"
+        },
+        cache: 'no-store'
       })
       const data = await response.json()
       setTrips(data)
@@ -118,50 +124,6 @@ export function Itinerary() {
       setLoading(false)
     }
   }
-
-  useEffect(() => {
-    let channel: any;
-
-    const setupSubscription = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
-
-      console.log('📡 [Realtime] Initializing for user:', session.user.id)
-
-      channel = supabase
-        .channel(`public:trips:user_id=eq.${session.user.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'trips',
-            filter: `user_id=eq.${session.user.id}`
-          },
-          (payload: any) => {
-            console.log('🔄 [Realtime] Payload received:', payload.eventType, payload.new?.id)
-            fetchTrips()
-          }
-        )
-        .subscribe((status: string) => {
-          console.log('🌐 [Realtime] Status:', status)
-          setRealtimeStatus(status)
-          if (status === 'CHANNEL_ERROR') {
-            console.error('❌ [Realtime] Subscription error. Check if Realtime is enabled for the "trips" table.')
-          }
-        })
-    }
-
-    fetchTrips()
-    setupSubscription()
-
-    return () => {
-      if (channel) {
-        console.log('🔌 [Realtime] Unsubscribing...')
-        supabase.removeChannel(channel)
-      }
-    }
-  }, [])
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this trip?")) return
@@ -220,7 +182,63 @@ export function Itinerary() {
   }
 
   // Filter out any trips that don't have events or valid parsed data
-  const validTrips = trips.filter(trip => trip.parsed_data?.events?.length > 0)
+  const validTrips = Array.isArray(trips)
+    ? trips.filter(trip => trip && trip.parsed_data?.events?.length > 0)
+    : []
+
+  useEffect(() => {
+    let channel: any;
+
+    const setupSubscription = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        console.warn('⚠️ [Realtime] No session found, skipping subscription')
+        return
+      }
+
+      console.log('📡 [Realtime] Initializing for user:', session.user.id)
+
+      // Clean up previous channel if it exists
+      if (channel) supabase.removeChannel(channel)
+
+      channel = supabase
+        .channel(`trips-updates-${session.user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'trips',
+            filter: `user_id=eq.${session.user.id}`
+          },
+          (payload: any) => {
+            console.log('🔄 [Realtime] Data change detected:', payload.eventType, payload.new?.id)
+            // Small timeout to allow for potential DB propagation/lag
+            setTimeout(() => {
+              console.log('🔄 [Realtime] Triggering refresh...')
+              fetchTrips()
+            }, 500)
+          }
+        )
+        .subscribe((status: string) => {
+          console.log('🌐 [Realtime] Connection status:', status)
+          setRealtimeStatus(status)
+          if (status === 'CHANNEL_ERROR') {
+            console.error('❌ [Realtime] Subscription failed. Please ensure "trips" table has Realtime enabled.')
+          }
+        })
+    }
+
+    fetchTrips()
+    setupSubscription()
+
+    return () => {
+      if (channel) {
+        console.log('🔌 [Realtime] Cleaning up...')
+        supabase.removeChannel(channel)
+      }
+    }
+  }, [])
 
   return (
     <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
