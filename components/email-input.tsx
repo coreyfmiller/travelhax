@@ -136,6 +136,7 @@ CRITICAL: You MUST output ONLY valid JSON. No explanations, no markdown, no code
 Extract all travel details from the email and output them according to this structure:
 
 {
+  "generated_trip_title": "Concise title",
   "extraction_metadata": {
     "extracted_at": "[ISO 8601 timestamp]",
     "email_subject": "[subject line]",
@@ -145,66 +146,74 @@ Extract all travel details from the email and output them according to this stru
   },
   "events": [
     {
-      "event_id": "[unique ID]",
-      "event_type": "[flight|hotel|rental_car|activity|dining|other]",
-      "status": "[confirmed|cancelled|delayed|modified]",
-      "provider": {
-        "name": "[company name]",
-        "support_phone": "[phone]"
-      },
-      "confirmation": {
-        "confirmation_code": "[booking reference]",
-        "confidence": [0.0-1.0]
-      },
+      "event_type": "flight | train | bus | ferry | car_rental | public_transit | taxi | hotel | vacation_rental | hostel | cruise | camping | restaurant | bar | food_tour | tour | attraction | performance | wellness | border_control | health | meeting | note | other",
+      "status": "confirmed | cancelled | delayed | modified",
       "timing": {
-        "start_datetime": "[ISO 8601 with timezone]",
-        "timezone": "[IANA timezone]"
+        "start_datetime": "ISO 8601 UTC string",
+        "end_datetime": "ISO 8601 UTC string",
+        "timezone": "IANA timezone string"
       },
       "location": {
-        "name": "[location name]",
-        "address": {
-          "full_address": "[complete address]"
+        "name": "Full Name",
+        "address": "Full physical address",
+        "phone": "Phone number if available",
+        "sub_location": {
+          "terminal": "string",
+          "gate": "string",
+          "platform": "string",
+          "room": "string",
+          "table": "string"
         }
       },
-      "important_notes": ["[array of important details]"],
+      "confirmation": {
+        "confirmation_code": "string",
+        "ticket_number": "string",
+        "pnr": "string"
+      },
+      "milestones": [
+        { "label": "string", "datetime": "ISO 8601 UTC string" }
+      ],
+      "provider": { 
+        "name": "Company Name",
+        "website": "URL if available"
+      },
+      "operational_info": {
+        "party_size": number,
+        "notes": "string",
+        "check_in_window": "string",
+        "items": ["list of items"]
+      },
       "cost": {
-          "total": [number],
-          "currency": "[USD|CAD|EUR|etc]"
-      },
-      "flight_details": {
-          "airline": "[airline name]",
-          "flight_number": "[flight num]",
-          "departure_airport": { "code": "[IATA]", "gate": "[gate]" },
-          "arrival_airport": { "code": "[IATA]" },
-          "seat": "[seat]",
-          "class": "[economy|business]"
-      },
-      "accommodation_details": {
-          "check_in": "[datetime]",
-          "check_out": "[datetime]",
-          "room_type": "[string]",
-          "number_of_nights": [int],
-          "guest_name": "[string]"
-      },
-      "rental_details": {
-          "vehicle_type": "[string]",
-          "pickup_datetime": "[datetime]",
-          "dropoff_datetime": "[datetime]",
-          "pickup_location": "[string]",
-          "dropoff_location": "[string]"
+        "subtotal": number,
+        "tax": number,
+        "tip": number,
+        "total_amount": number,
+        "currency": "USD | CAD | EUR | etc",
+        "payment_status": "paid | guaranteed | unpaid"
       }
     }
   ]
 }
 
 Rules:
-- Extract ONLY explicitly stated information
-- Use null for missing fields
-- Convert all dates to ISO 8601 format (YYYY-MM-DDTHH:MM:SS±HH:MM)
-- Assign confidence scores (1.0 = certain, 0.5 = uncertain)
-- Detect status from keywords (confirmed, cancelled, delayed)
-- Include timezone information when available
+- Transportation: flight, train, bus, ferry, car_rental, public_transit, taxi.
+- Lodging: hotel, vacation_rental, hostel, cruise, camping.
+- Culinary: restaurant, bar, food_tour, dining_reservation (includes ALL Reservations and Receipts).
+- Activities: tour, attraction, performance, wellness.
+- Admin: border_control, health, meeting, note.
+- Naming Rules:
+   - generated_trip_title MUST be clean and concise.
+   - NEVER use the raw email subject if it is a placeholder (e.g., 'Test 11', '123', 'My Email').
+   - NEVER use raw subjects containing 'Fwd:', 'Confirmation', or 'Receipt'.
+   - ALWAYS build a title from the location/event (e.g. 'Dinner at The Keg', 'Car Rental at Toronto Pearson').
+   - If event is 'other', use the location or purpose to create a title (e.g. 'Coffee with Sarah').
+- Milestones: Extract critical markers:
+   - Lodging: Check-in Start, Late Arrival info, Check-out Deadline.
+   - Transportation: Boarding Time, Gate Closing Time, Departure, Arrival.
+   - Culinary: Reservation time, Table hold duration, Cancellation window.
+   - General: Any "Must do by" or "Ends at" times found in the content.
 - Output ONLY the JSON, nothing else
+- If multiple events are found, list them all.
 `;
 
 export function EmailInput() {

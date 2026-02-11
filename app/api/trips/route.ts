@@ -19,23 +19,50 @@ const getSupabaseClient = (req: NextRequest) => {
 };
 
 const formatTripName = (data: any) => {
-    if (!data.events || data.events.length === 0) {
+    // 1. ABSOLUTE PRIORITY: AI-Generated Title at Root
+    if (data.generated_trip_title && data.generated_trip_title.trim().length > 0) {
+        return data.generated_trip_title;
+    }
+
+    const first = data.events?.[0];
+    if (!first) {
         return data.extraction_metadata?.email_subject || "Untitled Trip";
     }
-    const first = data.events[0];
-    const type = first.event_type || "Event";
 
+    // 2. FALLBACK: AI-Generated Name inside Event (legacy)
+    if (first.generated_trip_name && first.generated_trip_name.trim().length > 0) {
+        return first.generated_trip_name;
+    }
+
+    const type = (first.event_type || "Event").toLowerCase();
     const formattedType = type
         .split("_")
         .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
         .join(" ");
 
+    // 3. FALLBACK: Smart Naming by Type/Location
     if (type === "flight") {
-        return `Flight to ${first.location?.name || "Unknown"}`;
-    } else if (type === "hotel") {
-        return `Stay at ${first.provider?.name || "Hotel"}`;
+        return `Flight to ${first.location?.name || first.flight_details?.arrival_airport || "Destination"}`;
+    } else if (['hotel', 'vacation_rental', 'hostel', 'camping', 'lodging'].includes(type)) {
+        return `Stay at ${first.location?.name || first.provider?.name || "Lodging"}`;
+    } else if (['dining', 'restaurant', 'bar', 'food_tour', 'dining_reservation'].includes(type)) {
+        return `Dining at ${first.location?.name || first.provider?.name || "Restaurant"}`;
+    } else if (type === "train") {
+        return `Train to ${first.location?.name || "Destination"}`;
+    } else if (type === "bus") {
+        return `Bus to ${first.location?.name || "Destination"}`;
+    } else if (type === "car_rental") {
+        return `Car Rental from ${first.provider?.name || first.location?.name || "Company"}`;
+    } else if (['tour', 'attraction', 'performance', 'wellness'].includes(type)) {
+        return `${formattedType}: ${first.location?.name || first.provider?.name || "Activity"}`;
+    } else if (type === "cruise") {
+        return `Cruise on ${first.provider?.name || "Ship"}`;
     } else {
-        return formattedType;
+        // FINAL SMART FALLBACK: If we have a location, use it.
+        if (first.location?.name || first.provider?.name) {
+            return first.location?.name || first.provider?.name;
+        }
+        return data.extraction_metadata?.email_subject || formattedType;
     }
 };
 

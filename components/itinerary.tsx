@@ -13,6 +13,7 @@ function ItineraryCard({
   datetime,
   location,
   details,
+  milestones,
   onEdit,
   onDelete,
 }: {
@@ -23,6 +24,7 @@ function ItineraryCard({
   datetime: string;
   location: string;
   details: { label: string; value: string; icon?: string }[];
+  milestones?: { label: string; datetime: string }[];
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -30,6 +32,46 @@ function ItineraryCard({
     blue: "bg-primary/10 text-primary",
     green: "bg-emerald-500/15 text-emerald-800",
     amber: "bg-[hsl(43,74%,66%)]/15 text-[hsl(30,70%,40%)]",
+    rose: "bg-rose-500/15 text-rose-800",
+    indigo: "bg-indigo-500/15 text-indigo-800",
+  };
+
+  const getIcon = () => {
+    const t = type.toLowerCase();
+
+    // Transportation
+    if (['flight', 'taxi', 'public_transit'].includes(t)) {
+      if (t === 'flight') return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" /></svg>;
+      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-1.1 0-2 .9-2 2v7c0 .6.4 1 1 1h1" /><circle cx="7" cy="17" r="2" /><path d="M9 17h6" /><circle cx="17" cy="17" r="2" /></svg>;
+    }
+    if (t === 'train') return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="16" height="16" x="4" y="3" rx="2" /><path d="M4 11h16" /><path d="M12 3v8" /><path d="m8 19-2 3" /><path d="m18 22-2-3" /><path d="M8 15h.01" /><path d="M16 15h.01" /></svg>;
+    if (t === 'bus') return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="16" height="16" x="4" y="3" rx="2" /><path d="M4 11h16" /><circle cx="12" cy="15" r="1.5" /><circle cx="8" cy="15" r="1.5" /><circle cx="16" cy="15" r="1.5" /><path d="m8 19-2 3" /><path d="m18 22-2-3" /></svg>;
+
+    // Lodging
+    if (['hotel', 'vacation_rental', 'hostel', 'camping'].includes(t)) {
+      if (t === 'camping') return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 20 10 4 1 20h18Z" /><path d="M10 4l9 16" /><path d="m5 11 10 0" /></svg>;
+      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 20V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v11" /><path d="M2 17h14" /><path d="M2 14h14" /><path d="M18 17h4" /><path d="M18 14h4" /><path d="M22 22V11a2 2 0 0 0-2-2h-2" /><path d="M7 21v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4" /></svg>;
+    }
+    if (t === 'cruise') return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-1 5-1 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-1 5-1 1.3 0 1.9.5 2.5 1" /><path d="M19.38 20.42a2.4 2.4 0 0 0 3.81.47l.81-1.07V15H2v4.82l.81 1.07a2.4 2.4 0 0 0 3.81-.47l.88-1.18a2.4 2.4 0 0 1 3.81 0l.88 1.18a2.4 2.4 0 0 0 3.81 0l.88-1.18a2.4 2.4 0 0 1 3.81 0l.5.66Z" /><path d="M19 12.1V10l2-2V4h-5v4l2 2v2.1" /><path d="M11 15V7l2-2V4H8v1l2 2v8" /></svg>;
+
+    // Culinary
+    if (['restaurant', 'bar', 'food_tour', 'dining'].includes(t)) {
+      if (t === 'bar') return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 22h8" /><path d="M12 11v11" /><path d="m19 22-7-11-7 11" /><path d="M12 11c3.3 0 6-2.7 6-6V2H6v3c0 3.3 2.7 6 6 6Z" /></svg>;
+      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /><path d="M7 2v20" /><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" /></svg>;
+    }
+
+    // Activities
+    if (['tour', 'attraction', 'performance', 'wellness'].includes(t)) {
+      if (t === 'wellness') return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg>;
+      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.5 3.5 6.5 1.5 2 1 4.5-1 6.5" /></svg>;
+    }
+
+    // Admin
+    if (['border_control', 'health', 'meeting', 'note'].includes(t)) {
+      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>;
+    }
+
+    return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>;
   };
 
   return (
@@ -50,7 +92,8 @@ function ItineraryCard({
       </div>
       <div className="px-5 py-4">
         <div className="flex items-center gap-2">
-          <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider ${typeColorClasses[typeColor] || typeColorClasses.blue}`}>
+          <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider ${typeColorClasses[typeColor] || typeColorClasses.blue}`}>
+            {getIcon()}
             {type}
           </span>
         </div>
@@ -61,15 +104,28 @@ function ItineraryCard({
           </div>
           <div className="flex items-center gap-2 text-sm text-card-foreground">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-muted-foreground"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
-            {location}
+            <span className="line-clamp-1">{location}</span>
           </div>
+
+          {milestones && milestones.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {milestones.map((m, idx) => (
+                <div key={idx} className="flex flex-col rounded-md border border-primary/20 bg-primary/5 px-2 py-1">
+                  <span className="text-[9px] font-bold uppercase text-primary/60">{m.label}</span>
+                  <span className="text-[10px] font-semibold text-primary">
+                    {new Date(m.datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <div className="mt-4 rounded-lg border border-border bg-secondary/40 p-3">
           <div className="flex flex-col gap-1.5">
             {details.map((detail) => (
-              <div key={detail.label} className="flex items-center gap-2 text-xs">
-                <span className="text-muted-foreground">{detail.label}:</span>
-                <span className="font-medium text-card-foreground">{detail.value}</span>
+              <div key={detail.label} className="flex items-start gap-2 text-xs">
+                <span className="text-muted-foreground whitespace-nowrap">{detail.label}:</span>
+                <span className="font-medium text-card-foreground line-clamp-2">{detail.value}</span>
               </div>
             ))}
           </div>
@@ -199,34 +255,45 @@ export function Itinerary() {
       console.log('📡 [Realtime] Initializing for user:', session.user.id)
 
       // Clean up previous channel if it exists
-      if (channel) supabase.removeChannel(channel)
+      if (channel) {
+        console.log('🔄 [Realtime] Cleaning up old channel before restart')
+        supabase.removeChannel(channel)
+      }
 
-      channel = supabase
-        .channel(`trips-updates-${session.user.id}`)
+      // Create a fresh channel
+      // We use a unique name each time to avoid cache/stale issues
+      const channelName = `itinerary-debug-${Date.now()}`
+      channel = supabase.channel(channelName)
+
+      console.log('📡 [Realtime] Subscribing to ALL changes on "trips" table for debug...')
+
+      channel
         .on(
           'postgres_changes',
           {
-            event: '*',
+            event: '*', // Listen for EVERYTHING (Insert, Update, Delete)
             schema: 'public',
             table: 'trips',
-            filter: `user_id=eq.${session.user.id}`
+            // REMOVING FILTER TEMPORARILY FOR DEBUG
           },
           (payload: any) => {
-            console.log('🔄 [Realtime] PAYLOAD RECEIVED:', JSON.stringify(payload, null, 2))
-            console.log('🔄 [Realtime] New Row User:', payload.new?.user_id, 'Current Session User:', session.user.id)
+            console.log('🚨 [Realtime] EVENT DETECTED!', payload.eventType, payload)
 
-            // Small timeout to allow for potential DB propagation/lag
-            setTimeout(() => {
-              console.log('🔄 [Realtime] Triggering refresh...')
+            // Check if the user_id matches manually in the callback
+            const payloadUserId = payload.new?.user_id || payload.old?.user_id
+            if (payloadUserId === session.user.id) {
+              console.log('✅ [Realtime] Match found for current user. Refreshing...')
               fetchTrips()
-            }, 500)
+            } else {
+              console.log('ℹ️ [Realtime] Event detected but for different user:', payloadUserId)
+            }
           }
         )
         .subscribe((status: string) => {
-          console.log('🌐 [Realtime] Connection status:', status)
+          console.log('🌐 [Realtime] Status:', status, 'on debug channel:', channelName)
           setRealtimeStatus(status)
           if (status === 'CHANNEL_ERROR') {
-            console.error('❌ [Realtime] Subscription failed. Please ensure "trips" table has Realtime enabled.')
+            console.error('❌ [Realtime] Subscription failed. Action required: Enable Realtime for the "trips" table in Supabase Dashboard (Replication -> supabase_realtime).')
           }
         })
     }
@@ -300,22 +367,60 @@ export function Itinerary() {
                 {dayTrips.map((trip: any) => {
                   const data = trip.parsed_data;
                   const event = data.events?.[0];
+
+                  // Collect rich details
+                  const cardDetails = [
+                    // Verification
+                    ...(event.confirmation?.pnr ? [{ label: "PNR", value: event.confirmation.pnr }] : []),
+                    ...(event.confirmation?.confirmation_code ? [{ label: "Confirmation", value: event.confirmation.confirmation_code }] : []),
+                    ...(event.confirmation?.ticket_number ? [{ label: "Ticket", value: event.confirmation.ticket_number }] : []),
+
+                    { label: "Provider", value: event.provider?.name || "N/A" },
+
+                    // Sub-locations
+                    ...(event.location?.sub_location?.terminal ? [{ label: "Terminal", value: event.location.sub_location.terminal }] : []),
+                    ...(event.location?.sub_location?.gate ? [{ label: "Gate", value: event.location.sub_location.gate }] : []),
+                    ...(event.location?.sub_location?.platform ? [{ label: "Platform", value: event.location.sub_location.platform }] : []),
+                    ...(event.location?.sub_location?.room ? [{ label: "Room", value: event.location.sub_location.room }] : []),
+                    ...(event.location?.sub_location?.table ? [{ label: "Table", value: event.location.sub_location.table }] : []),
+
+                    ...(event.location?.address ? [{ label: "Address", value: event.location.address }] : []),
+                    ...(event.location?.phone ? [{ label: "Phone", value: event.location.phone }] : []),
+
+                    // Operational info
+                    ...(event.operational_info?.party_size ? [{ label: "Party Size", value: event.operational_info.party_size.toString() }] : []),
+                    ...(event.operational_info?.check_in_window ? [{ label: "Check-in", value: event.operational_info.check_in_window }] : []),
+                    ...(event.operational_info?.items ? [{ label: "Items", value: event.operational_info.items.join(", ") }] : []),
+
+                    // Financials
+                    ...(event.cost?.total_amount ? [{ label: "Total", value: `${event.cost.total_amount} ${event.cost.currency || 'USD'}${event.cost.payment_status === 'paid' ? ' (Paid)' : ''}` }] : []),
+                  ];
+
+                  // Determine color based on UTO group
+                  const getCategoryColor = (t: string): string => {
+                    if (!t) return 'blue';
+                    const lowT = t.toLowerCase();
+                    if (['flight', 'train', 'bus', 'ferry', 'car_rental', 'public_transit', 'taxi'].includes(lowT)) return 'blue';
+                    if (['hotel', 'vacation_rental', 'hostel', 'cruise', 'camping', 'lodging'].includes(lowT)) return 'green';
+                    if (['restaurant', 'bar', 'food_tour', 'dining', 'dining_reservation'].includes(lowT)) return 'rose';
+                    if (['tour', 'attraction', 'performance', 'wellness'].includes(lowT)) return 'amber';
+                    if (['border_control', 'health', 'meeting', 'note'].includes(lowT)) return 'indigo';
+                    return 'amber'; // fallback
+                  };
+
                   return (
                     <ItineraryCard
                       key={trip.id}
                       title={trip.trip_name}
                       savedDate={new Date(trip.created_at).toLocaleDateString()}
                       type={event.event_type}
-                      typeColor={event.event_type === "flight" ? "blue" : event.event_type === "hotel" ? "green" : "amber"}
+                      typeColor={getCategoryColor(event.event_type)}
                       datetime={event.timing?.start_datetime ? new Date(event.timing.start_datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "All Day"}
                       location={event.location?.name || "Unknown"}
                       onEdit={() => setEditingTrip(trip)}
                       onDelete={() => handleDelete(trip.id)}
-                      details={[
-                        { label: "Confirmation", value: event.confirmation?.confirmation_code || "N/A" },
-                        { label: "Provider", value: event.provider?.name || "N/A" },
-                        ...(event.hotel_details ? [{ label: "Room", value: event.hotel_details.room_type || "N/A" }] : []),
-                      ]}
+                      details={cardDetails}
+                      milestones={event.milestones}
                     />
                   );
                 })}

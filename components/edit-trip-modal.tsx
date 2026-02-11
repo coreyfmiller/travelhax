@@ -19,6 +19,7 @@ export function EditTripModal({ trip, isOpen, onClose, onSave }: EditTripModalPr
 
     const [formData, setFormData] = useState({
         trip_name: trip?.trip_name || "",
+        event_type: trip?.parsed_data?.events?.[0]?.event_type || "other",
         start_datetime: trip?.parsed_data?.events?.[0]?.timing?.start_datetime || "",
         location: trip?.parsed_data?.events?.[0]?.location?.name || "",
         confirmation_code: trip?.parsed_data?.events?.[0]?.confirmation?.confirmation_code || "",
@@ -47,6 +48,7 @@ export function EditTripModal({ trip, isOpen, onClose, onSave }: EditTripModalPr
                         events: [
                             {
                                 ...trip.parsed_data.events[0],
+                                event_type: formData.event_type,
                                 timing: {
                                     ...trip.parsed_data.events[0].timing,
                                     start_datetime: dateInput ? new Date(dateInput).toISOString() : null
@@ -74,7 +76,7 @@ export function EditTripModal({ trip, isOpen, onClose, onSave }: EditTripModalPr
                             extracted_at: new Date().toISOString(),
                         },
                         events: [{
-                            event_type: "other", // Default type
+                            event_type: formData.event_type,
                             timing: {
                                 start_datetime: dateInput ? new Date(dateInput).toISOString() : new Date().toISOString()
                             },
@@ -116,6 +118,52 @@ export function EditTripModal({ trip, isOpen, onClose, onSave }: EditTripModalPr
                             className="col-span-3"
                             placeholder="e.g. Flight to NYC"
                         />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="event_type" className="text-right">
+                            Category
+                        </Label>
+                        <select
+                            id="event_type"
+                            value={formData.event_type}
+                            onChange={(e) => setFormData({ ...formData, event_type: e.target.value })}
+                            className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            <optgroup label="Transportation">
+                                <option value="flight">Flight</option>
+                                <option value="train">Train</option>
+                                <option value="bus">Bus</option>
+                                <option value="ferry">Ferry</option>
+                                <option value="car_rental">Car Rental</option>
+                                <option value="public_transit">Public Transit</option>
+                                <option value="taxi">Taxi</option>
+                            </optgroup>
+                            <optgroup label="Lodging">
+                                <option value="hotel">Hotel</option>
+                                <option value="vacation_rental">Vacation Rental</option>
+                                <option value="hostel">Hostel</option>
+                                <option value="cruise">Cruise</option>
+                                <option value="camping">Camping</option>
+                            </optgroup>
+                            <optgroup label="Culinary">
+                                <option value="restaurant">Restaurant</option>
+                                <option value="bar">Bar</option>
+                                <option value="food_tour">Food Tour</option>
+                            </optgroup>
+                            <optgroup label="Activities & Sightseeing">
+                                <option value="tour">Tour</option>
+                                <option value="attraction">Attraction</option>
+                                <option value="performance">Performance</option>
+                                <option value="wellness">Wellness</option>
+                            </optgroup>
+                            <optgroup label="Administrative">
+                                <option value="border_control">Border Control</option>
+                                <option value="health">Health</option>
+                                <option value="meeting">Meeting</option>
+                                <option value="note">Note</option>
+                                <option value="other">Other</option>
+                            </optgroup>
+                        </select>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="date" className="text-right">

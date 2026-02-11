@@ -68,51 +68,82 @@ export async function POST(req: NextRequest) {
     console.log(`🤖 Calling Gemini for extraction...`);
 
     const prompt = `
-        Extract travel details from this email.
+        You are a specialized Travel Confirmation Data Extraction Engine. Extract structured travel details from this email.
         Return a JSON object with this structure:
         {
+          "generated_trip_title": "Concise, user-friendly title based on BOTH subject and content (e.g. 'Dinner at The Keg', 'Boat Cruise in Miami', 'Amtrak to Boston', 'Meeting with Client').",
           "events": [
             {
-              "event_type": "flight" | "hotel" | "car_rental" | "train" | "other",
+              "event_type": "flight" | "train" | "bus" | "ferry" | "car_rental" | "public_transit" | "taxi" | "hotel" | "vacation_rental" | "hostel" | "cruise" | "camping" | "restaurant" | "bar" | "food_tour" | "tour" | "attraction" | "performance" | "wellness" | "border_control" | "health" | "meeting" | "note" | "other",
+              "status": "confirmed" | "cancelled" | "delayed" | "modified",
               "timing": {
                 "start_datetime": "ISO 8601 UTC string (YYYY-MM-DDTHH:mm:ssZ)",
-                "end_datetime": "ISO 8601 UTC string"
+                "end_datetime": "ISO 8601 UTC string",
+                "timezone": "IANA timezone string (e.g. America/New_York)"
               },
               "location": {
-                "name": "Airport/Hotel Name",
-                "address": "Full address if available",
+                "name": "Full Name of Airport/Hotel/Restaurant/etc",
+                "address": "Full physical address",
+                "phone": "Phone number if available",
+                "sub_location": {
+                  "terminal": "string",
+                  "gate": "string",
+                  "platform": "string",
+                  "room": "string",
+                  "table": "string"
+                },
                 "geo_coordinates": { "lat": number, "lng": number } (optional)
               },
               "confirmation": {
                 "confirmation_code": "string",
-                "ticket_number": "string"
+                "ticket_number": "string",
+                "pnr": "string"
               },
-              "provider": { "name": "Airline/Hotel Chain" },
-              "flight_details": { // Optional, only for flights
-                "flight_number": "string",
-                "airline_code": "string",
-                "departure_airport": "IATA code",
-                "arrival_airport": "IATA code",
-                "seat_number": "string",
-                "gate": "string"
+              "milestones": [
+                { "label": "Check-in Start | Check-out Deadline | Boarding Time | Gate Closes | Departure | Arrival | Table Held Until | Cancellation Deadline", "datetime": "ISO 8601 UTC string" }
+              ],
+              "provider": { 
+                "name": "Company Name",
+                "website": "URL if available"
               },
-              "hotel_details": { // Optional, only for hotels
-                "room_type": "string",
-                "check_in_time": "string", 
-                "check_out_time": "string"
+              "operational_info": {
+                "party_size": number,
+                "notes": "e.g., Anniversary, Dress code: Formal, Window seat",
+                "check_in_window": "string",
+                "items": ["list", "of", "items", "if", "receipt"]
               },
               "cost": {
+                "subtotal": number,
+                "tax": number,
+                "tip": number,
                 "total_amount": number,
-                "currency": "USD" | "EUR" | etc
+                "currency": "USD" | "CAD" | "EUR" | etc,
+                "payment_status": "paid" | "guaranteed" | "unpaid"
               }
             }
           ]
         }
         
-        Important:
-        - If multiple events are found (e.g. Flight 1, Flight 2), list them all.
-        - Ensure dates are in future (relative to today).
-        - If specific details are missing, omit the field or use null.
+        Rules:
+        - Transportation: Includes flight, train, bus, ferry, car_rental, public_transit, taxi.
+        - Lodging: Includes hotel, vacation_rental, hostel, cruise, camping.
+        - Culinary: restaurant, bar, food_tour, dining (includes ALL Reservations and Receipts).
+        - Activities: tour, attraction, performance, wellness.
+        - Admin: border_control, health, meeting, note.
+        - Naming Rules:
+           - generated_trip_title MUST be clean and concise.
+           - NEVER use the raw email subject if it contains codes, 'Fwd:', or 'Confirmation'.
+           - Example: If subject is 'Fwd: Your Amtrak ticket for Tomorrow', title should be 'Amtrak to [City]'.
+           - If category is 'other', generate a title based on the context (e.g. 'Visit to Museum').
+        - Temporal/Milestones: Extract critical markers:
+           - Lodging: Check-in Start, Late Arrival info, Check-out Deadline.
+           - Transportation: Boarding Time, Gate Closing Time, Departure, Arrival.
+           - Culinary: Reservation time, Table hold duration, Cancellation window.
+           - General: Any "Must do by" or "Ends at" times found in the content.
+        - Temporal: Use ISO 8601. Detect local timezone.
+        - Financials: Extract total, tax, tip, currency.
+        - Verification: Pull PNR, ticket numbers, and confirmation codes.
+        - Logic: If multiple events are found, list them all.
         
         Email Content:
         ${contentToParse.substring(0, 20000)}
@@ -149,11 +180,41 @@ export async function POST(req: NextRequest) {
 
     // Helper to format trip name
     const firstEvent = parsedData.events?.[0] || {};
-    let tripName = subject;
-    if (firstEvent.event_type === 'flight') {
-      tripName = `Flight to ${firstEvent.location?.name || firstEvent.flight_details?.arrival_airport || 'Destination'}`;
-    } else if (firstEvent.event_type === 'hotel') {
-      tripName = `Stay at ${firstEvent.location?.name || 'Hotel'}`;
+    let tripName = (parsedData.generated_trip_title && parsedData.generated_trip_title.trim().length > 0)
+      ? parsedData.generated_trip_title
+      : subject;
+    const type = (firstEvent.event_type || "").toLowerCase();
+
+    // Clean up "Test" subjects if they are clearly placeholders
+    const isTestSubject = subject.toLowerCase().startsWith("test") || /^[0-9]+$/.test(subject.trim());
+
+    // Only apply fallback formatting if the AI didn't generate a specific name
+    if (!parsedData.generated_trip_title || parsedData.generated_trip_title.trim().length === 0) {
+      if (type === "flight") {
+        tripName = `Flight to ${firstEvent.location?.name || firstEvent.flight_details?.arrival_airport || 'Destination'}`;
+      } else if (['hotel', 'vacation_rental', 'hostel', 'camping', 'cruise', 'lodging'].includes(type)) {
+        tripName = `Stay at ${firstEvent.location?.name || firstEvent.provider?.name || 'Lodging'}`;
+      } else if (['dining', 'restaurant', 'bar', 'food_tour', 'dining_reservation'].includes(type)) {
+        tripName = `Dining at ${firstEvent.location?.name || firstEvent.provider?.name || 'Restaurant'}`;
+      } else if (type === "train") {
+        tripName = `Train to ${firstEvent.location?.name || "Destination"}`;
+      } else if (type === "bus") {
+        tripName = `Bus to ${firstEvent.location?.name || "Destination"}`;
+      } else if (type === "car_rental") {
+        tripName = `Car Rental from ${firstEvent.provider?.name || firstEvent.location?.name || "Company"}`;
+      } else if (['tour', 'attraction', 'performance', 'wellness'].includes(type)) {
+        tripName = `${type.charAt(0).toUpperCase() + type.slice(1)}: ${firstEvent.location?.name || firstEvent.provider?.name || "Activity"}`;
+      } else if (type === "taxi" || type === "public_transit") {
+        tripName = `${type === 'taxi' ? 'Taxi' : 'Transit'} to ${firstEvent.location?.name || 'Destination'}`;
+      } else if (['border_control', 'health', 'meeting', 'note'].includes(type)) {
+        tripName = `${type.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}: ${firstEvent.location?.name || firstEvent.provider?.name || subject}`;
+      } else {
+        // SMART FALLBACK: If nothing matches but we have a location, use it.
+        // Especially if the current subject is just "Test 11"
+        if (firstEvent.location?.name || firstEvent.provider?.name) {
+          tripName = `${firstEvent.location?.name || firstEvent.provider?.name}`;
+        }
+      }
     }
 
     const { data: trip, error: tripError } = await supabaseAdmin
