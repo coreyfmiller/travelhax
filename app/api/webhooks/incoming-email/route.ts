@@ -178,7 +178,7 @@ export async function POST(req: NextRequest) {
       throw tripError;
     }
 
-    console.log(`🎉 Trip saved successfully: ${trip[0].id}`);
+    console.log(`🎉 Trip saved successfully: ${trip[0].id} for User: ${userId}`);
     return NextResponse.json({ success: true, tripId: trip[0].id });
 
   } catch (error: any) {

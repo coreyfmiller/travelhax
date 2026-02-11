@@ -212,7 +212,9 @@ export function Itinerary() {
             filter: `user_id=eq.${session.user.id}`
           },
           (payload: any) => {
-            console.log('🔄 [Realtime] Data change detected:', payload.eventType, payload.new?.id)
+            console.log('🔄 [Realtime] PAYLOAD RECEIVED:', JSON.stringify(payload, null, 2))
+            console.log('🔄 [Realtime] New Row User:', payload.new?.user_id, 'Current Session User:', session.user.id)
+
             // Small timeout to allow for potential DB propagation/lag
             setTimeout(() => {
               console.log('🔄 [Realtime] Triggering refresh...')
