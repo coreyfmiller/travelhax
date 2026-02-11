@@ -90,26 +90,28 @@ export function ApprovedSenders() {
                     <h3 className="font-extrabold text-2xl tracking-tight">Setup Instructions</h3>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
                     {/* Step 1: Add Senders */}
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-2">
                             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">1</span>
                             <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Authorize your emails</p>
                         </div>
-                        <div className="rounded-lg bg-background border border-primary/20 p-4 shadow-sm flex flex-col gap-3">
-                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest px-1">Adding sender email:</p>
-                            <div className="flex gap-2">
-                                <Input
-                                    placeholder="your@email.com"
-                                    value={newEmail}
-                                    onChange={(e) => setNewEmail(e.target.value)}
-                                    className="h-10 text-sm shadow-sm"
-                                />
-                                <Button onClick={handleAddSender} disabled={loading} className="h-10 px-4 gap-2 font-bold shadow-sm shrink-0">
-                                    {loading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                                    Add Email
-                                </Button>
+                        <div className="rounded-lg bg-background border border-primary/20 p-5 shadow-sm flex flex-col justify-between flex-1">
+                            <div>
+                                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest px-1 mb-3">Adding sender email:</p>
+                                <div className="flex gap-2">
+                                    <Input
+                                        placeholder="your@email.com"
+                                        value={newEmail}
+                                        onChange={(e) => setNewEmail(e.target.value)}
+                                        className="h-10 text-sm shadow-sm"
+                                    />
+                                    <Button onClick={handleAddSender} disabled={loading} className="h-10 px-4 gap-2 font-bold shadow-sm shrink-0">
+                                        {loading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                                        Add Email
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -120,21 +122,23 @@ export function ApprovedSenders() {
                             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">2</span>
                             <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Forward your travels</p>
                         </div>
-                        <div className="rounded-lg bg-background border border-primary/20 p-4 shadow-sm">
-                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mb-2 px-1">Send emails to:</p>
-                            <div className="flex items-center justify-between gap-2">
-                                <code className="text-sm font-bold text-primary bg-primary/5 px-3 py-1.5 rounded-md border border-primary/10 select-all">
-                                    {forwardingEmail}
-                                </code>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-9 gap-2 font-medium"
-                                    onClick={copyToClipboard}
-                                >
-                                    {copying ? <Check size={14} className="text-green-500" /> : <Clipboard size={14} />}
-                                    {copying ? "Copied" : "Copy"}
-                                </Button>
+                        <div className="rounded-lg bg-background border border-primary/20 p-5 shadow-sm flex flex-col justify-between flex-1">
+                            <div>
+                                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest px-1 mb-3">Send emails to:</p>
+                                <div className="flex items-center justify-between gap-2">
+                                    <code className="text-sm font-bold text-primary bg-primary/5 px-3 py-1.5 rounded-md border border-primary/10 select-all flex-1 text-center">
+                                        {forwardingEmail}
+                                    </code>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-10 gap-2 font-medium px-4"
+                                        onClick={copyToClipboard}
+                                    >
+                                        {copying ? <Check size={14} className="text-green-500" /> : <Clipboard size={14} />}
+                                        {copying ? "Copied" : "Copy"}
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </div>
