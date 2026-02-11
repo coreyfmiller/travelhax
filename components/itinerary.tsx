@@ -99,6 +99,7 @@ export function Itinerary() {
   const [loading, setLoading] = useState(true)
   const [editingTrip, setEditingTrip] = useState<any>(null)
   const [isCreating, setIsCreating] = useState(false)
+  const [realtimeStatus, setRealtimeStatus] = useState<string>("init")
   const { toast } = useToast()
 
   const fetchTrips = async () => {
@@ -119,29 +120,42 @@ export function Itinerary() {
   }
 
   useEffect(() => {
-    fetchTrips()
+    let channel: any;
 
-    // Subscribe to real-time changes
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'trips'
-        },
-        () => {
-          console.log('🔄 Real-time update: Refreshing trips...')
-          fetchTrips()
-        }
-      )
-      .subscribe()
+    const setupSubscription = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      console.log('📡 Subscribing to real-time trips for user:', session.user.id)
+
+      channel = supabase
+        .channel(`trips-realtime-${session.user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'trips',
+            filter: `user_id=eq.${session.user.id}`
+          },
+          (payload: any) => {
+            console.log('🔄 Real-time update received:', payload.eventType)
+            fetchTrips()
+          }
+        )
+        .subscribe((status: string) => {
+          console.log('🌐 Real-time status:', status)
+          setRealtimeStatus(status)
+        })
+    }
+
+    fetchTrips()
+    setupSubscription()
 
     window.addEventListener("refresh-trips", fetchTrips)
     return () => {
       window.removeEventListener("refresh-trips", fetchTrips)
-      supabase.removeChannel(channel)
+      if (channel) supabase.removeChannel(channel)
     }
   }, [])
 
@@ -210,6 +224,10 @@ export function Itinerary() {
           </div>
           <h2 className="text-sm font-semibold tracking-wide uppercase text-card-foreground">My Itinerary</h2>
           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{trips.length} items</span>
+          <div className="flex items-center gap-1.5 ml-2" title={`Real-time sync: ${realtimeStatus}`}>
+            <div className={`h-1.5 w-1.5 rounded-full ${realtimeStatus === 'SUBSCRIBED' ? 'bg-green-500 animate-pulse' : 'bg-amber-500'}`} />
+            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">Live</span>
+          </div>
         </div>
         <button
           onClick={() => setIsCreating(true)}
