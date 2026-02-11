@@ -4,6 +4,7 @@ import { useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
+import { ChevronDown, ChevronUp } from "lucide-react"
 
 const sampleEmails = {
   flight: `Subject: Flight Confirmation - AC123 Toronto to Vancouver
@@ -210,6 +211,7 @@ export function EmailInput() {
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
   const [selectedFile, setSelectedFile] = useState<{ base64: string; mimeType: string; name: string } | null>(null)
+  const [isCollapsed, setIsCollapsed] = useState(true)
   const { toast } = useToast()
 
   const handleParse = async () => {
@@ -289,38 +291,54 @@ export function EmailInput() {
           <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
           </div>
-          <h2 className="text-sm font-semibold tracking-wide uppercase text-card-foreground">Email Input</h2>
+          <h2 className="text-sm font-semibold tracking-wide uppercase text-card-foreground">Manual Input</h2>
         </div>
-        <div className="flex gap-2">
-          <input type="file" id="file-upload" className="hidden" accept="application/pdf" onChange={handleFile} />
-          <Button variant="outline" onClick={() => document.getElementById("file-upload")?.click()} className="w-32">
-            {selectedFile ? "Change PDF" : "Upload PDF"}
-          </Button>
-          <Button onClick={handleParse} disabled={loading} className="w-32">
-            {loading ? "Parsing..." : "Parse Email"}
+        <div className="flex items-center gap-4">
+          {!isCollapsed && (
+            <div className="flex gap-2">
+              <input type="file" id="file-upload" className="hidden" accept="application/pdf" onChange={handleFile} />
+              <Button variant="outline" onClick={() => document.getElementById("file-upload")?.click()} className="w-32 h-8 text-xs">
+                {selectedFile ? "Change PDF" : "Upload PDF"}
+              </Button>
+              <Button onClick={handleParse} disabled={loading} className="w-32 h-8 text-xs">
+                {loading ? "Parsing..." : "Parse Email"}
+              </Button>
+            </div>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="text-muted-foreground hover:text-foreground p-1"
+          >
+            {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
           </Button>
         </div>
       </div>
-      <div className="border-b border-border bg-secondary/50 px-6 py-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="mr-1 text-xs font-medium text-muted-foreground">Samples:</span>
-          {sampleButtons.map((btn) => (
-            <button key={btn.label} type="button" onClick={() => setInput(sampleEmails[btn.key])} className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-card-foreground transition-colors hover:bg-secondary">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><path d={btn.icon} /></svg>
-              {btn.label}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="p-6">
-        {selectedFile && (
-          <div className="mb-4 flex items-center justify-between rounded-lg bg-primary/5 p-3 text-sm border border-primary/10">
-            <span className="font-medium">Paper clipped: {selectedFile.name}</span>
-            <button onClick={() => setSelectedFile(null)} className="text-muted-foreground hover:text-destructive">×</button>
+      {!isCollapsed && (
+        <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="border-b border-border bg-secondary/50 px-6 py-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="mr-1 text-xs font-medium text-muted-foreground">Samples:</span>
+              {sampleButtons.map((btn) => (
+                <button key={btn.label} type="button" onClick={() => setInput(sampleEmails[btn.key])} className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-card-foreground transition-colors hover:bg-secondary">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><path d={btn.icon} /></svg>
+                  {btn.label}
+                </button>
+              ))}
+            </div>
           </div>
-        )}
-        <textarea rows={8} value={input} onChange={(e) => setInput(e.target.value)} placeholder="Paste your travel confirmation email here..." className="w-full resize-y rounded-lg border border-border bg-background px-4 py-3 font-mono text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
-      </div>
+          <div className="p-6">
+            {selectedFile && (
+              <div className="mb-4 flex items-center justify-between rounded-lg bg-primary/5 p-3 text-sm border border-primary/10">
+                <span className="font-medium">Paper clipped: {selectedFile.name}</span>
+                <button onClick={() => setSelectedFile(null)} className="text-muted-foreground hover:text-destructive">×</button>
+              </div>
+            )}
+            <textarea rows={8} value={input} onChange={(e) => setInput(e.target.value)} placeholder="Paste your travel confirmation email here..." className="w-full resize-y rounded-lg border border-border bg-background px-4 py-3 font-mono text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          </div>
+        </div>
+      )}
     </section>
   );
 }

@@ -45,6 +45,8 @@ export default function Page() {
     <div className="min-h-screen bg-background relative">
       <Header />
       <main className="mx-auto max-w-4xl px-4 py-8 flex flex-col gap-8">
+        {user && <ApprovedSenders />}
+
         <div className="relative">
           <EmailInput />
           {!user && (
@@ -61,8 +63,6 @@ export default function Page() {
             </div>
           )}
         </div>
-
-        {user && <ApprovedSenders />}
 
         <div className="relative">
           <Itinerary />

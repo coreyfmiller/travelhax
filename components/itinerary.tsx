@@ -28,7 +28,7 @@ function ItineraryCard({
 }) {
   const typeColorClasses: Record<string, string> = {
     blue: "bg-primary/10 text-primary",
-    green: "bg-accent/10 text-accent-foreground",
+    green: "bg-emerald-500/15 text-emerald-800",
     amber: "bg-[hsl(43,74%,66%)]/15 text-[hsl(30,70%,40%)]",
   };
 
