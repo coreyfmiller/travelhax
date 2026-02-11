@@ -126,10 +126,10 @@ export function Itinerary() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
 
-      console.log('📡 Subscribing to real-time trips for user:', session.user.id)
+      console.log('📡 [Realtime] Initializing for user:', session.user.id)
 
       channel = supabase
-        .channel(`trips-realtime-${session.user.id}`)
+        .channel(`public:trips:user_id=eq.${session.user.id}`)
         .on(
           'postgres_changes',
           {
@@ -139,23 +139,27 @@ export function Itinerary() {
             filter: `user_id=eq.${session.user.id}`
           },
           (payload: any) => {
-            console.log('🔄 Real-time update received:', payload.eventType)
+            console.log('🔄 [Realtime] Payload received:', payload.eventType, payload.new?.id)
             fetchTrips()
           }
         )
         .subscribe((status: string) => {
-          console.log('🌐 Real-time status:', status)
+          console.log('🌐 [Realtime] Status:', status)
           setRealtimeStatus(status)
+          if (status === 'CHANNEL_ERROR') {
+            console.error('❌ [Realtime] Subscription error. Check if Realtime is enabled for the "trips" table.')
+          }
         })
     }
 
     fetchTrips()
     setupSubscription()
 
-    window.addEventListener("refresh-trips", fetchTrips)
     return () => {
-      window.removeEventListener("refresh-trips", fetchTrips)
-      if (channel) supabase.removeChannel(channel)
+      if (channel) {
+        console.log('🔌 [Realtime] Unsubscribing...')
+        supabase.removeChannel(channel)
+      }
     }
   }, [])
 
@@ -215,6 +219,9 @@ export function Itinerary() {
     }
   }
 
+  // Filter out any trips that don't have events or valid parsed data
+  const validTrips = trips.filter(trip => trip.parsed_data?.events?.length > 0)
+
   return (
     <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
       <div className="flex items-center justify-between border-b border-border px-6 py-4">
@@ -223,7 +230,7 @@ export function Itinerary() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent-foreground"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" /></svg>
           </div>
           <h2 className="text-sm font-semibold tracking-wide uppercase text-card-foreground">My Itinerary</h2>
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{trips.length} items</span>
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{validTrips.length} items</span>
           <div className="flex items-center gap-1.5 ml-2" title={`Real-time sync: ${realtimeStatus}`}>
             <div className={`h-1.5 w-1.5 rounded-full ${realtimeStatus === 'SUBSCRIBED' ? 'bg-green-500 animate-pulse' : 'bg-amber-500'}`} />
             <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">Live</span>
@@ -241,11 +248,11 @@ export function Itinerary() {
       <div className="flex flex-col gap-8 p-6">
         {loading ? (
           <div className="flex items-center justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
-        ) : trips.length === 0 ? (
+        ) : validTrips.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">No trips yet. Try parsing an email!</div>
         ) : (
           (Object.entries(
-            trips.reduce((acc, trip) => {
+            validTrips.reduce((acc, trip) => {
               const event = trip.parsed_data?.events?.[0];
               if (!event) return acc;
 
