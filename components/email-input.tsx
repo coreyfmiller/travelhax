@@ -102,31 +102,87 @@ Seating Preference: Booth (Subject to availability)
 
 Please note: We hold reservations for 15 minutes.
 To modify or cancel, please call (416) 367-0685.`,
-  lunch: `Subject: Lunch Reservation - Momofuku Noodle Bar
+  musical: `Subject: Confirmation: Your tickets for Hamilton at the Victoria Palace Theatre
 
-Hi John,
+Hello Corey,
 
-Your reservation at Momofuku Noodle Bar Toronto is confirmed.
+Get ready for an unforgettable night! Your tickets for Hamilton are confirmed.
 
-Date: Wednesday, October 25, 2026
-Time: 12:30 PM
-Party Size: 4 People
+Show Date: October 25, 2026
+Show Time: 07:30 PM
+Location: Victoria Palace Theatre, Victoria St, London SW1E 5EA, UK
+Seats: Stalls, Row G, Seats 14-15
+Confirmation Number: HAM-8822910
 
-Address: 190 University Ave, Toronto, ON M5H 0A3
-Confirmation ID: MF-98765
+Please arrive at least 30 minutes before the performance.`,
+  spa: `Subject: Booking Confirmed: Your Appointment at Blue Lagoon
 
-Notes: No severe allergies.
+Dear Guest,
 
-See you soon!
-Momofuku Team`,
+We are delighted to confirm your wellness journey.
+
+Treatment: In-Water Massage (60 min)
+Date: October 26, 2026
+Time: 02:00 PM
+Location: Blue Lagoon, Grindavik 240, Iceland
+Check-in: 01:30 PM
+Confirmation Code: BL-99331`,
+  sports: `Subject: Your Tickets: Toronto Raptors vs. Boston Celtics
+
+Ticketmaster Order: 12-8821/YYZ
+
+Event: Raptors vs. Celtics
+Date: October 27, 2026
+Tip-off: 08:00 PM
+Venue: Scotiabank Arena, 40 Bay St., Toronto, ON M5J 2X2
+Section: 108, Row 12, Seat 5
+Order ID: TM-RAPS-4402`,
+  tour: `Subject: Reservation Confirmed: Ultimate Scottish Highlands Tour
+
+Hi there,
+
+Tour Name: Isle of Skye & Eilean Donan Castle Day Trip
+Date: October 28, 2026
+Meeting Time: 07:45 AM
+Departure Time: 08:00 AM
+Meeting Point: 190 High St, Edinburgh EH1 1RW
+Booking Ref: SCOT-TOUR-771
+Provider: Rabbie's Trail Burners`,
+  fishing: `Subject: Confirmed: Full-Day Fly Fishing on the Bow River
+
+Tight lines, Corey!
+
+Activity: Guided Drift Boat Fly Fishing
+Target Species: Rainbow and Brown Trout
+Date: October 29, 2026
+Start Time: 06:00 AM
+End Time: 02:00 PM
+Pickup Location: 123 Heritage Dr SE, Calgary, AB T2H 2M8
+Booking ID: FISH-BOW-552`,
+  transit: `Subject: E-Ticket: Your Eurostar Booking to Paris
+
+Booking Reference: EURO-9911XC
+
+Train: ES 9024
+From: London St Pancras Int'l
+To: Paris Nord
+Date: October 30, 2026
+Departure: 10:24 AM
+Arrival: 01:47 PM
+Coach: 08, Seat 61
+Check-in Deadline: 09:30 AM (Strict)`,
 };
 
 const sampleButtons = [
   { label: "Flight", key: "flight" as const, icon: "M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" },
   { label: "Hotel", key: "hotel" as const, icon: "M18 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM9 14a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm6 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" },
   { label: "Rental", key: "rental" as const, icon: "M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9L18 10l-2.7-3.4A2 2 0 0 0 13.7 6H6.3a2 2 0 0 0-1.6.9L2 10l-2.5 1.1C-.7 11.3-1 12.1-1 13v3c0 .6.4 1 1 1h2M7 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM17 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" },
-  { label: "Dinner", key: "dinner" as const, icon: "M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" },
-  { label: "Lunch", key: "lunch" as const, icon: "M18 8h1a4 4 0 0 0 0-8h-1M2 8h16M6 1v3M10 1v3M14 1v3M2 8a5 5 0 0 0 5 5h2a5 5 0 0 0 5-5M6 15v3M14 15v3M4 18h12" },
+  { label: "Musical", key: "musical" as const, icon: "M2 18 22 2M2 6l20 16M22 6 2 22M9 3v1h6V3l-3-2-3 2z" },
+  { label: "Spa", key: "spa" as const, icon: "M12 3c-1.1 0-2.1.4-2.8 1.2L8 5.4c-.6.6-.9 1.4-.9 2.3v1c0 .6.4 1 1 1h7.8c.6 0 1-.4 1-1v-1c0-.9-.3-1.7-.9-2.3L14.8 4.2C14.1 3.4 13.1 3 12 3zM7.1 11c-.6 0-1 .4-1 1v7c0 1.1.9 2 2 2h7.8c1.1 0 2-.9 2-2v-7c0-.6-.4-1-1-1H7.1z" },
+  { label: "Sports", key: "sports" as const, icon: "M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-2.34c3.11-.27 5.5-2.85 5.5-5.96h-13c0 3.11 2.39 5.69 5.5 5.96z" },
+  { label: "Tour", key: "tour" as const, icon: "m12 1-6.5 11.5L4 14l1 1 1 1 1.5-.5L12 14l4.5 3 1.5.5 1-1 1-1-1.5-1.5L12 1zM8.5 11l-.5 4.5L11 20l1 3 1-3 3-4.5-.5-4.5L12 8.5 8.5 11z" },
+  { label: "Fishing", key: "fishing" as const, icon: "M12 12c-4 0-7 3-7 7 0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2 0-4-3-7-7-7zM12 2v3M5 7l2 2M19 7l-2 2" },
+  { label: "Transit", key: "transit" as const, icon: "M7 22c1.1 0 2-.9 2-2H8c-1.1 0-2 .9-2 2zM17 22c1.1 0 2-.9 2-2h-1c-1.1 0-2 .9-2 2zM4 11V4c0-1.1.9-2 2-2h12c1.1 0 2 .9 2 2v7M4 15h16M4 11h16" },
 ];
 
 const MASTER_PROMPT = `You are a specialized Travel Confirmation Data Extraction Engine. Your sole purpose is to analyze travel-related emails and extract structured data in JSON format.
