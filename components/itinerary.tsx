@@ -28,6 +28,8 @@ function ItineraryCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const typeColorClasses: Record<string, string> = {
     blue: "bg-primary/10 text-primary",
     green: "bg-emerald-500/15 text-emerald-800",
@@ -120,16 +122,41 @@ function ItineraryCard({
             </div>
           )}
         </div>
-        <div className="mt-4 rounded-lg border border-border bg-secondary/40 p-3">
-          <div className="flex flex-col gap-1.5">
-            {details.map((detail) => (
-              <div key={detail.label} className="flex items-start gap-2 text-xs">
-                <span className="text-muted-foreground whitespace-nowrap">{detail.label}:</span>
-                <span className="font-medium text-card-foreground line-clamp-2">{detail.value}</span>
-              </div>
-            ))}
+
+        {details.length > 0 && (
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="mt-4 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
+          >
+            {isExpanded ? "Hide Details" : "Show Details"}
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}
+            >
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </button>
+        )}
+
+        {isExpanded && details.length > 0 && (
+          <div className="mt-2 rounded-lg border border-border bg-secondary/40 p-3">
+            <div className="flex flex-col gap-1.5">
+              {details.map((detail) => (
+                <div key={detail.label} className="flex items-start gap-2 text-xs">
+                  <span className="text-muted-foreground whitespace-nowrap">{detail.label}:</span>
+                  <span className="font-medium text-card-foreground line-clamp-2">{detail.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
