@@ -148,17 +148,6 @@ Departure Time: 08:00 AM
 Meeting Point: 190 High St, Edinburgh EH1 1RW
 Booking Ref: SCOT-TOUR-771
 Provider: Rabbie's Trail Burners`,
-  fishing: `Subject: Confirmed: Full-Day Fly Fishing on the Bow River
-
-Tight lines, Corey!
-
-Activity: Guided Drift Boat Fly Fishing
-Target Species: Rainbow and Brown Trout
-Date: October 29, 2026
-Start Time: 06:00 AM
-End Time: 02:00 PM
-Pickup Location: 123 Heritage Dr SE, Calgary, AB T2H 2M8
-Booking ID: FISH-BOW-552`,
   transit: `Subject: E-Ticket: Your Eurostar Booking to Paris
 
 Booking Reference: EURO-9911XC
@@ -181,7 +170,6 @@ const sampleButtons = [
   { label: "Spa", key: "spa" as const, icon: "M12 3c-1.1 0-2.1.4-2.8 1.2L8 5.4c-.6.6-.9 1.4-.9 2.3v1c0 .6.4 1 1 1h7.8c.6 0 1-.4 1-1v-1c0-.9-.3-1.7-.9-2.3L14.8 4.2C14.1 3.4 13.1 3 12 3zM7.1 11c-.6 0-1 .4-1 1v7c0 1.1.9 2 2 2h7.8c1.1 0 2-.9 2-2v-7c0-.6-.4-1-1-1H7.1z" },
   { label: "Sports", key: "sports" as const, icon: "M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-2.34c3.11-.27 5.5-2.85 5.5-5.96h-13c0 3.11 2.39 5.69 5.5 5.96z" },
   { label: "Tour", key: "tour" as const, icon: "m12 1-6.5 11.5L4 14l1 1 1 1 1.5-.5L12 14l4.5 3 1.5.5 1-1 1-1-1.5-1.5L12 1zM8.5 11l-.5 4.5L11 20l1 3 1-3 3-4.5-.5-4.5L12 8.5 8.5 11z" },
-  { label: "Fishing", key: "fishing" as const, icon: "M12 12c-4 0-7 3-7 7 0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2 0-4-3-7-7-7zM12 2v3M5 7l2 2M19 7l-2 2" },
   { label: "Transit", key: "transit" as const, icon: "M7 22c1.1 0 2-.9 2-2H8c-1.1 0-2 .9-2 2zM17 22c1.1 0 2-.9 2-2h-1c-1.1 0-2 .9-2 2zM4 11V4c0-1.1.9-2 2-2h12c1.1 0 2 .9 2 2v7M4 15h16M4 11h16" },
 ];
 

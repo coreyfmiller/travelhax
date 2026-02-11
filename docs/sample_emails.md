@@ -76,26 +76,6 @@ Please bring waterproof clothing and comfortable walking shoes.
 
 ---
 
-## 🎣 Fishing (Trouts Activity)
-**Subject:** Confirmed: Full-Day Fly Fishing on the Bow River
-**Body:**
-Tight lines, Corey!
-
-Your guided trout fishing trip is locked in.
-
-**Activity:** Guided Drift Boat Fly Fishing
-**Target Species:** Rainbow and Brown Trout
-**Date:** October 29, 2026
-**Start Time:** 06:00 AM
-**End Time:** 02:00 PM
-**Pickup Location:** 123 Heritage Dr SE, Calgary, AB T2H 2M8 (Bass Pro Shops Parking Lot)
-**Guide Name:** Dave Hunter
-**Booking ID:** FISH-BOW-552
-
-We provide rods, reels, and lunch. Please ensure you have a valid Alberta Fishing License.
-
----
-
 ## 🚆 Transit (Train/Bus)
 **Subject:** E-Ticket: Your Eurostar Booking to Paris
 **Body:**
