@@ -97,7 +97,8 @@ export function ApprovedSenders() {
                             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold">1</span>
                             <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Authorize your emails</p>
                         </div>
-                        <div className="flex flex-col gap-3">
+                        <div className="rounded-lg bg-background border border-primary/20 p-4 shadow-sm flex flex-col gap-3">
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest px-1">Adding sender email:</p>
                             <div className="flex gap-2">
                                 <Input
                                     placeholder="your@email.com"
@@ -105,14 +106,11 @@ export function ApprovedSenders() {
                                     onChange={(e) => setNewEmail(e.target.value)}
                                     className="h-10 text-sm shadow-sm"
                                 />
-                                <Button onClick={handleAddSender} disabled={loading} className="h-10 px-4 gap-2 font-bold shadow-sm">
+                                <Button onClick={handleAddSender} disabled={loading} className="h-10 px-4 gap-2 font-bold shadow-sm shrink-0">
                                     {loading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
                                     Add Email
                                 </Button>
                             </div>
-                            <p className="text-[10px] text-muted-foreground leading-relaxed italic">
-                                Add any address (yours, family, or assistant) that will be forwarding travel emails to your account.
-                            </p>
                         </div>
                     </div>
 
