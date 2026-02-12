@@ -102,6 +102,7 @@ Rules:
 export function EmailInput() {
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
+  const [isMinimized, setIsMinimized] = useState(false)
   const [selectedFile, setSelectedFile] = useState<{ base64: string; mimeType: string; name: string } | null>(null)
   const { toast } = useToast()
 
@@ -185,34 +186,47 @@ export function EmailInput() {
         </div>
         <div className="flex gap-2">
           <input type="file" id="file-upload" className="hidden" accept="application/pdf" onChange={handleFile} />
-          <Button variant="outline" size="sm" onClick={() => document.getElementById("file-upload")?.click()}>
-            {selectedFile ? "Change PDF" : "Upload PDF"}
-          </Button>
-          <Button onClick={handleParse} disabled={loading}>
-            {loading ? "Parsing..." : "Parse Email"}
+          {!isMinimized && (
+            <>
+              <Button variant="outline" size="sm" onClick={() => document.getElementById("file-upload")?.click()}>
+                {selectedFile ? "Change PDF" : "Upload PDF"}
+              </Button>
+              <Button onClick={handleParse} disabled={loading}>
+                {loading ? "Parsing..." : "Parse Email"}
+              </Button>
+            </>
+          )}
+          <Button variant="ghost" size="icon" className="h-8 w-8 ml-2" onClick={() => setIsMinimized(!isMinimized)}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-200 ${isMinimized ? "rotate-180" : ""}`}>
+              <path d="m18 15-6-6-6 6" />
+            </svg>
           </Button>
         </div>
       </div>
-      <div className="border-b border-border bg-secondary/50 px-6 py-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="mr-1 text-xs font-medium text-muted-foreground">Samples:</span>
-          {sampleButtons.map((btn) => (
-            <button key={btn.label} type="button" onClick={() => setInput(sampleEmails[btn.key])} className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-card-foreground transition-colors hover:bg-secondary">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><path d={btn.icon} /></svg>
-              {btn.label}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="p-6">
-        {selectedFile && (
-          <div className="mb-4 flex items-center justify-between rounded-lg bg-primary/5 p-3 text-sm border border-primary/10">
-            <span className="font-medium">Paper clipped: {selectedFile.name}</span>
-            <button onClick={() => setSelectedFile(null)} className="text-muted-foreground hover:text-destructive">×</button>
+      {!isMinimized && (
+        <>
+          <div className="border-b border-border bg-secondary/50 px-6 py-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="mr-1 text-xs font-medium text-muted-foreground">Samples:</span>
+              {sampleButtons.map((btn) => (
+                <button key={btn.label} type="button" onClick={() => setInput(sampleEmails[btn.key])} className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-card-foreground transition-colors hover:bg-secondary">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><path d={btn.icon} /></svg>
+                  {btn.label}
+                </button>
+              ))}
+            </div>
           </div>
-        )}
-        <textarea rows={8} value={input} onChange={(e) => setInput(e.target.value)} placeholder="Paste your travel confirmation email here..." className="w-full resize-y rounded-lg border border-border bg-background px-4 py-3 font-mono text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
-      </div>
+          <div className="p-6">
+            {selectedFile && (
+              <div className="mb-4 flex items-center justify-between rounded-lg bg-primary/5 p-3 text-sm border border-primary/10">
+                <span className="font-medium">Paper clipped: {selectedFile.name}</span>
+                <button onClick={() => setSelectedFile(null)} className="text-muted-foreground hover:text-destructive">×</button>
+              </div>
+            )}
+            <textarea rows={8} value={input} onChange={(e) => setInput(e.target.value)} placeholder="Paste your travel confirmation email here..." className="w-full resize-y rounded-lg border border-border bg-background px-4 py-3 font-mono text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          </div>
+        </>
+      )}
     </section>
   );
 }

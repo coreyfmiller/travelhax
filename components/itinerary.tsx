@@ -4,26 +4,30 @@ import React, { useState, useEffect, useMemo } from "react"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/components/ui/use-toast"
 import { format, parseISO, isSameDay } from "date-fns"
+import { EditTripModal } from "@/components/edit-trip-modal"
 
 interface TravelEvent {
   event_id: string;
   event_type: string;
   status: string;
-  provider: { name: string };
-  confirmation: { confirmation_code: string };
-  timing: { start_datetime: string; end_datetime?: string };
-  location: { name: string };
+  provider: { name: string; support_phone?: string; website?: string };
+  confirmation: { confirmation_code: string; pnr?: string };
+  timing: { start_datetime: string; end_datetime?: string; timezone?: string };
+  location: { name: string; address?: { full_address: string } };
   flight_details?: any;
   accommodation_details?: any;
   rental_details?: any;
-  trip_id: string; // Internal ref to delete
+  important_notes?: string[];
+  trip_id: string; // Internal ref to delete/edit
 }
 
 function ItineraryCard({
   event,
+  onEdit,
   onDelete,
 }: {
   event: TravelEvent;
+  onEdit: () => void;
   onDelete: () => void;
 }) {
   const typeStyles: Record<string, { color: string; icon: React.ReactNode }> = {
@@ -80,29 +84,59 @@ function ItineraryCard({
               <p className="text-xs text-muted-foreground">{timeLabel} • {event.location?.name}</p>
             </div>
           </div>
-          <button
-            onClick={onDelete}
-            className="rounded-md p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
-          </button>
+          <div className="flex items-center gap-1 opacity-0 transition-all group-hover:opacity-100">
+            <button
+              onClick={onEdit}
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+              title="Edit"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" /></svg>
+            </button>
+            <button
+              onClick={onDelete}
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+              title="Delete"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 rounded-lg bg-secondary/30 p-4 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4 rounded-lg bg-secondary/30 p-4 sm:grid-cols-3">
           <div className="space-y-0.5">
             <span className="text-[10px] font-medium uppercase text-muted-foreground">Confirmation</span>
             <p className="text-sm font-medium">{event.confirmation?.confirmation_code || 'N/A'}</p>
           </div>
 
+          {(event.provider?.support_phone || event.provider?.website) && (
+            <div className="space-y-0.5">
+              <span className="text-[10px] font-medium uppercase text-muted-foreground">Provider Info</span>
+              <p className="text-sm font-medium">
+                {event.provider.support_phone || ''}
+                {event.provider.website && (
+                  <a href={event.provider.website} target="_blank" rel="noopener noreferrer" className="ml-1 text-primary hover:underline">Link</a>
+                )}
+              </p>
+            </div>
+          )}
+
           {event.event_type === 'flight' && (
             <>
               <div className="space-y-0.5">
                 <span className="text-[10px] font-medium uppercase text-muted-foreground">Gate / Terminal</span>
-                <p className="text-sm font-medium">{event.flight_details?.departure_airport?.gate || '-'} / {event.flight_details?.departure_airport?.terminal || '-'}</p>
+                <p className="text-sm font-medium">
+                  {event.flight_details?.departure_airport?.gate || '-'} / {event.flight_details?.departure_airport?.terminal || '-'}
+                </p>
               </div>
               <div className="space-y-0.5">
-                <span className="text-[10px] font-medium uppercase text-muted-foreground">Seat</span>
-                <p className="text-sm font-medium">{event.flight_details?.seat || 'Unassigned'}</p>
+                <span className="text-[10px] font-medium uppercase text-muted-foreground">Seat / Class</span>
+                <p className="text-sm font-medium">
+                  {event.flight_details?.seat || 'Unassigned'} ({event.flight_details?.class || 'Economy'})
+                </p>
+              </div>
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-medium uppercase text-muted-foreground">PNR</span>
+                <p className="text-sm font-medium">{event.confirmation?.pnr || 'N/A'}</p>
               </div>
             </>
           )}
@@ -114,10 +148,40 @@ function ItineraryCard({
                 <p className="text-sm font-medium">{event.accommodation_details?.number_of_guests || '1'}</p>
               </div>
               <div className="space-y-0.5">
-                <span className="text-[10px] font-medium uppercase text-muted-foreground">Check-in</span>
-                <p className="text-sm font-medium">{event.accommodation_details?.check_in ? format(parseISO(event.accommodation_details.check_in), "MMM d") : '-'}</p>
+                <span className="text-[10px] font-medium uppercase text-muted-foreground">Room Type</span>
+                <p className="text-sm font-medium">{event.accommodation_details?.room_type || 'N/A'}</p>
+              </div>
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-medium uppercase text-muted-foreground">Stay</span>
+                <p className="text-sm font-medium">
+                  {event.accommodation_details?.check_in ? format(parseISO(event.accommodation_details.check_in), "MMM d") : '-'} - {event.accommodation_details?.check_out ? format(parseISO(event.accommodation_details.check_out), "MMM d") : '-'}
+                </p>
               </div>
             </>
+          )}
+
+          {event.event_type === 'rental_car' && (
+            <>
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-medium uppercase text-muted-foreground">Vehicle</span>
+                <p className="text-sm font-medium">{event.rental_details?.vehicle_type || 'N/A'}</p>
+              </div>
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-medium uppercase text-muted-foreground">Pickup</span>
+                <p className="text-sm font-medium">{event.rental_details?.pickup_location || 'N/A'}</p>
+              </div>
+            </>
+          )}
+
+          {event.important_notes && event.important_notes.length > 0 && (
+            <div className="col-span-full space-y-0.5 border-t border-border/50 pt-3 mt-1">
+              <span className="text-[10px] font-medium uppercase text-muted-foreground">Important Notes</span>
+              <ul className="list-inside list-disc text-xs text-card-foreground/80">
+                {event.important_notes.map((note, idx) => (
+                  <li key={idx}>{note}</li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
       </div>
@@ -128,6 +192,8 @@ function ItineraryCard({
 export function Itinerary() {
   const [trips, setTrips] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [editingTrip, setEditingTrip] = useState<any | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const { toast } = useToast()
 
   const fetchTrips = async () => {
@@ -154,7 +220,7 @@ export function Itinerary() {
   }, [])
 
   const handleDelete = async (tripId: string) => {
-    if (!confirm("Delete all events from this parsing?")) return
+    if (!confirm("Delete all events from this parsing session?")) return
     try {
       const { data: { session } } = await supabase.auth.getSession()
       await fetch(`/api/trips/${tripId}`, {
@@ -168,12 +234,38 @@ export function Itinerary() {
     }
   }
 
+  const handleEdit = (trip: any) => {
+    setEditingTrip(trip)
+    setIsEditModalOpen(true)
+  }
+
+  const handleSaveEdit = async (updatedTrip: any) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const response = await fetch(`/api/trips/${updatedTrip.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ tripData: updatedTrip.parsed_data, tripName: updatedTrip.trip_name })
+      })
+
+      if (!response.ok) throw new Error("Failed to save updates")
+
+      toast({ title: "Success", description: "Trip updated successfully" })
+      fetchTrips()
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" })
+    }
+  }
+
   const flattenedEvents = useMemo(() => {
     const events: TravelEvent[] = [];
     trips.forEach(trip => {
       const tripEvents = trip.parsed_data?.events || [];
       tripEvents.forEach((event: any) => {
-        events.push({ ...event, trip_id: trip.id });
+        events.push({ ...event, trip_id: trip.id, _orig_trip: trip });
       });
     });
 
@@ -245,6 +337,7 @@ export function Itinerary() {
                   <ItineraryCard
                     key={event.event_id}
                     event={event}
+                    onEdit={() => handleEdit((event as any)._orig_trip)}
                     onDelete={() => handleDelete(event.trip_id)}
                   />
                 ))}
@@ -253,6 +346,15 @@ export function Itinerary() {
           ))
         )}
       </div>
+
+      {editingTrip && (
+        <EditTripModal
+          trip={editingTrip}
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSave={handleSaveEdit}
+        />
+      )}
     </section>
   );
 }
