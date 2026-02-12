@@ -60,7 +60,7 @@ export function Header() {
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-card-foreground">
-              Travel Itinerary 5000
+              Travel Itinerary
             </h1>
             <p className="text-sm text-muted-foreground">
               Transform confirmation emails into structured data

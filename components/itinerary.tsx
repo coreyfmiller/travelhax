@@ -1,178 +1,126 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/components/ui/use-toast"
-import { EditTripModal } from "@/components/edit-trip-modal"
+import { format, parseISO, isSameDay } from "date-fns"
+
+interface TravelEvent {
+  event_id: string;
+  event_type: string;
+  status: string;
+  provider: { name: string };
+  confirmation: { confirmation_code: string };
+  timing: { start_datetime: string; end_datetime?: string };
+  location: { name: string };
+  flight_details?: any;
+  accommodation_details?: any;
+  rental_details?: any;
+  trip_id: string; // Internal ref to delete
+}
 
 function ItineraryCard({
-  title,
-  savedDate,
-  type,
-  typeColor,
-  datetime,
-  location,
-  details,
-  milestones,
-  onEdit,
+  event,
   onDelete,
 }: {
-  title: string;
-  savedDate: string;
-  type: string;
-  typeColor: string;
-  datetime: string;
-  location: string;
-  details: { label: string; value: string; icon?: string }[];
-  milestones?: { label: string; datetime: string }[];
-  onEdit: () => void;
+  event: TravelEvent;
   onDelete: () => void;
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  const typeColorClasses: Record<string, string> = {
-    blue: "bg-primary/10 text-primary",
-    green: "bg-emerald-500/15 text-emerald-800",
-    amber: "bg-[hsl(43,74%,66%)]/15 text-[hsl(30,70%,40%)]",
-    rose: "bg-rose-500/15 text-rose-800",
-    indigo: "bg-indigo-500/15 text-indigo-800",
+  const typeStyles: Record<string, { color: string; icon: React.ReactNode }> = {
+    flight: {
+      color: "bg-blue-500/10 text-blue-600 border-blue-200",
+      icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" /></svg>
+    },
+    hotel: {
+      color: "bg-emerald-500/10 text-emerald-600 border-emerald-200",
+      icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM9 14a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm6 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" /></svg>
+    },
+    rental_car: {
+      color: "bg-orange-500/10 text-orange-600 border-orange-200",
+      icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9L18 10l-2.7-3.4A2 2 0 0 0 13.7 6H6.3a2 2 0 0 0-1.6.9L2 10l-2.5 1.1C-.7 11.3-1 12.1-1 13v3c0 .6.4 1 1 1h2" /><circle cx="7" cy="17" r="2" /><circle cx="17" cy="17" r="2" /></svg>
+    },
+    dining: {
+      color: "bg-rose-500/10 text-rose-600 border-rose-200",
+      icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" /></svg>
+    }
   };
 
-  const getIcon = () => {
-    const t = type.toLowerCase();
-
-    // Transportation
-    if (['flight', 'taxi', 'public_transit'].includes(t)) {
-      if (t === 'flight') return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" /></svg>;
-      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-1.1 0-2 .9-2 2v7c0 .6.4 1 1 1h1" /><circle cx="7" cy="17" r="2" /><path d="M9 17h6" /><circle cx="17" cy="17" r="2" /></svg>;
-    }
-    if (t === 'train') return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="16" height="16" x="4" y="3" rx="2" /><path d="M4 11h16" /><path d="M12 3v8" /><path d="m8 19-2 3" /><path d="m18 22-2-3" /><path d="M8 15h.01" /><path d="M16 15h.01" /></svg>;
-    if (t === 'bus') return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="16" height="16" x="4" y="3" rx="2" /><path d="M4 11h16" /><circle cx="12" cy="15" r="1.5" /><circle cx="8" cy="15" r="1.5" /><circle cx="16" cy="15" r="1.5" /><path d="m8 19-2 3" /><path d="m18 22-2-3" /></svg>;
-
-    // Lodging
-    if (['hotel', 'vacation_rental', 'hostel', 'camping'].includes(t)) {
-      if (t === 'camping') return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 20 10 4 1 20h18Z" /><path d="M10 4l9 16" /><path d="m5 11 10 0" /></svg>;
-      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 20V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v11" /><path d="M2 17h14" /><path d="M2 14h14" /><path d="M18 17h4" /><path d="M18 14h4" /><path d="M22 22V11a2 2 0 0 0-2-2h-2" /><path d="M7 21v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4" /></svg>;
-    }
-    if (t === 'cruise') return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-1 5-1 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-1 5-1 1.3 0 1.9.5 2.5 1" /><path d="M19.38 20.42a2.4 2.4 0 0 0 3.81.47l.81-1.07V15H2v4.82l.81 1.07a2.4 2.4 0 0 0 3.81-.47l.88-1.18a2.4 2.4 0 0 1 3.81 0l.88 1.18a2.4 2.4 0 0 0 3.81 0l.88-1.18a2.4 2.4 0 0 1 3.81 0l.5.66Z" /><path d="M19 12.1V10l2-2V4h-5v4l2 2v2.1" /><path d="M11 15V7l2-2V4H8v1l2 2v8" /></svg>;
-
-    // Culinary
-    if (['restaurant', 'bar', 'food_tour', 'dining'].includes(t)) {
-      if (t === 'bar') return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 22h8" /><path d="M12 11v11" /><path d="m19 22-7-11-7 11" /><path d="M12 11c3.3 0 6-2.7 6-6V2H6v3c0 3.3 2.7 6 6 6Z" /></svg>;
-      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /><path d="M7 2v20" /><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" /></svg>;
-    }
-
-    // Activities
-    if (['tour', 'attraction', 'performance', 'wellness'].includes(t)) {
-      if (t === 'wellness') return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg>;
-      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.5 3.5 6.5 1.5 2 1 4.5-1 6.5" /></svg>;
-    }
-
-    // Admin
-    if (['border_control', 'health', 'meeting', 'note'].includes(t)) {
-      return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>;
-    }
-
-    return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>;
+  const style = typeStyles[event.event_type] || {
+    color: "bg-slate-500/10 text-slate-600 border-slate-200",
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
   };
+
+  const timeLabel = event.timing?.start_datetime
+    ? format(parseISO(event.timing.start_datetime), "h:mm a")
+    : "N/A";
 
   return (
-    <div className="group relative rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
-      <div className="flex items-start justify-between border-b border-border px-5 py-4">
-        <div>
-          <h4 className="text-sm font-semibold text-card-foreground">{title}</h4>
-          <p className="mt-0.5 text-xs text-muted-foreground">Saved: {savedDate}</p>
-        </div>
-        <div className="flex items-center gap-1">
-          <button onClick={onEdit} type="button" className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary" aria-label="Edit">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
-          </button>
-          <button onClick={onDelete} type="button" className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive" aria-label="Delete">
+    <div className="relative group">
+      {/* Timeline Connector */}
+      <div className="absolute -left-7 top-0 bottom-0 w-0.5 bg-border group-last:bottom-auto group-last:h-4" />
+      <div className="absolute -left-[31px] top-4 h-4 w-4 rounded-full border-2 border-background bg-primary shadow-sm ring-4 ring-background" />
+
+      <div className="mb-6 rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:shadow-md">
+        <div className="mb-4 flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`flex h-8 w-8 items-center justify-center rounded-lg border ${style.color}`}>
+              {style.icon}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="font-semibold text-card-foreground">
+                  {event.event_type === 'flight' ? `Flight ${event.flight_details?.flight_number || ''}` :
+                    event.event_type === 'hotel' ? `Stay at ${event.provider?.name}` :
+                      event.provider?.name || 'Travel Event'}
+                </h4>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 border border-border px-1.5 py-0.5 rounded">
+                  {event.status}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">{timeLabel} • {event.location?.name}</p>
+            </div>
+          </div>
+          <button
+            onClick={onDelete}
+            className="rounded-md p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+          >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
           </button>
         </div>
-      </div>
-      <div className="px-5 py-4">
-        <div className="flex items-center gap-2">
-          <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider ${typeColorClasses[typeColor] || typeColorClasses.blue}`}>
-            {getIcon()}
-            {type}
-          </span>
-        </div>
-        <div className="mt-3 flex flex-col gap-2">
-          <div className="flex items-center gap-2 text-sm text-card-foreground">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-muted-foreground"><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></svg>
-            {datetime}
-          </div>
-          <div className="flex items-center gap-2 text-sm text-card-foreground">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-muted-foreground"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
-            <span className="line-clamp-1">{location}</span>
+
+        <div className="grid grid-cols-2 gap-4 rounded-lg bg-secondary/30 p-4 sm:grid-cols-3">
+          <div className="space-y-0.5">
+            <span className="text-[10px] font-medium uppercase text-muted-foreground">Confirmation</span>
+            <p className="text-sm font-medium">{event.confirmation?.confirmation_code || 'N/A'}</p>
           </div>
 
-          {milestones && milestones.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {milestones.map((m, idx) => (
-                <div key={idx} className="flex flex-col rounded-md border border-primary/20 bg-primary/5 px-2 py-1">
-                  <span className="text-[9px] font-bold uppercase text-primary/60">{m.label}</span>
-                  <span className="text-[10px] font-semibold text-primary">
-                    {new Date(m.datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-              ))}
-            </div>
+          {event.event_type === 'flight' && (
+            <>
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-medium uppercase text-muted-foreground">Gate / Terminal</span>
+                <p className="text-sm font-medium">{event.flight_details?.departure_airport?.gate || '-'} / {event.flight_details?.departure_airport?.terminal || '-'}</p>
+              </div>
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-medium uppercase text-muted-foreground">Seat</span>
+                <p className="text-sm font-medium">{event.flight_details?.seat || 'Unassigned'}</p>
+              </div>
+            </>
+          )}
+
+          {event.event_type === 'hotel' && (
+            <>
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-medium uppercase text-muted-foreground">Guests</span>
+                <p className="text-sm font-medium">{event.accommodation_details?.number_of_guests || '1'}</p>
+              </div>
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-medium uppercase text-muted-foreground">Check-in</span>
+                <p className="text-sm font-medium">{event.accommodation_details?.check_in ? format(parseISO(event.accommodation_details.check_in), "MMM d") : '-'}</p>
+              </div>
+            </>
           )}
         </div>
-
-        {details.length > 0 && (
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="mt-4 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
-          >
-            {isExpanded ? "Hide Details" : "Show Details"}
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}
-            >
-              <path d="m6 9 6 6 6-6" />
-            </svg>
-          </button>
-        )}
-
-        {isExpanded && details.length > 0 && (
-          <div className="mt-2 rounded-lg border border-border bg-secondary/40 p-3">
-            <div className="flex flex-col gap-1.5">
-              {details.map((detail) => (
-                <div key={detail.label} className="flex items-start gap-2 text-xs">
-                  <span className="text-muted-foreground whitespace-nowrap">{detail.label}:</span>
-                  <span className="font-medium text-card-foreground line-clamp-2">{detail.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
-    </div>
-  );
-}
-
-function DaySection({ date, children }: { date: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div className="mb-4 flex items-center gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></svg>
-        </div>
-        <h3 className="text-base font-semibold text-foreground">{date}</h3>
-        <div className="h-px flex-1 bg-border" />
-      </div>
-      <div className="ml-4 flex flex-col gap-4 border-l-2 border-primary/20 pl-6">{children}</div>
     </div>
   );
 }
@@ -180,9 +128,6 @@ function DaySection({ date, children }: { date: string; children: React.ReactNod
 export function Itinerary() {
   const [trips, setTrips] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [editingTrip, setEditingTrip] = useState<any>(null)
-  const [isCreating, setIsCreating] = useState(false)
-  const [realtimeStatus, setRealtimeStatus] = useState<string>("init")
   const { toast } = useToast()
 
   const fetchTrips = async () => {
@@ -190,14 +135,8 @@ export function Itinerary() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
 
-      console.log('🔄 [Itinerary] Fetching trips...')
       const response = await fetch("/api/trips", {
-        headers: {
-          "Authorization": `Bearer ${session.access_token}`,
-          "Cache-Control": "no-cache",
-          "Pragma": "no-cache"
-        },
-        cache: 'no-store'
+        headers: { "Authorization": `Bearer ${session.access_token}` }
       })
       const data = await response.json()
       setTrips(data)
@@ -208,272 +147,112 @@ export function Itinerary() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this trip?")) return
+  useEffect(() => {
+    fetchTrips()
+    window.addEventListener("refresh-trips", fetchTrips)
+    return () => window.removeEventListener("refresh-trips", fetchTrips)
+  }, [])
+
+  const handleDelete = async (tripId: string) => {
+    if (!confirm("Delete all events from this parsing?")) return
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      await fetch(`/api/trips/${id}`, {
+      await fetch(`/api/trips/${tripId}`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${session?.access_token}` }
       })
       fetchTrips()
+      toast({ title: "Deleted", description: "Events removed from your itinerary." })
     } catch (e) {
       toast({ title: "Error", description: "Failed to delete trip" })
     }
   }
 
-  const handleUpdateTrip = async (updatedTrip: any) => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const response = await fetch(`/api/trips/${updatedTrip.id}`, {
-        method: "PUT",
-        headers: {
-          "Authorization": `Bearer ${session?.access_token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(updatedTrip)
-      })
+  const flattenedEvents = useMemo(() => {
+    const events: TravelEvent[] = [];
+    trips.forEach(trip => {
+      const tripEvents = trip.parsed_data?.events || [];
+      tripEvents.forEach((event: any) => {
+        events.push({ ...event, trip_id: trip.id });
+      });
+    });
 
-      if (!response.ok) throw new Error("Failed to update")
+    // Sort chronologically
+    return events.sort((a, b) => {
+      const dateA = a.timing?.start_datetime ? new Date(a.timing.start_datetime).getTime() : 0;
+      const dateB = b.timing?.start_datetime ? new Date(b.timing.start_datetime).getTime() : 0;
+      return dateA - dateB;
+    });
+  }, [trips]);
 
-      toast({ title: "Success", description: "Trip updated successfully" })
-      fetchTrips()
-    } catch (e) {
-      toast({ title: "Error", description: "Failed to update trip", variant: "destructive" })
-    }
-  }
-
-  const handleCreateTrip = async (newTrip: any) => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const response = await fetch("/api/trips", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${session?.access_token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ tripData: newTrip.parsed_data })
-      })
-
-      if (!response.ok) throw new Error("Failed to create")
-
-      toast({ title: "Success", description: "Trip created successfully" })
-      fetchTrips()
-    } catch (e) {
-      toast({ title: "Error", description: "Failed to create trip", variant: "destructive" })
-    }
-  }
-
-  // Filter out any trips that don't have events or valid parsed data
-  const validTrips = Array.isArray(trips)
-    ? trips.filter(trip => trip && trip.parsed_data?.events?.length > 0)
-    : []
-
-  useEffect(() => {
-    let channel: any;
-
-    const setupSubscription = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        console.warn('⚠️ [Realtime] No session found, skipping subscription')
-        return
+  const groupedByDay = useMemo(() => {
+    const groups: { date: Date; events: TravelEvent[] }[] = [];
+    flattenedEvents.forEach(event => {
+      if (!event.timing?.start_datetime) return;
+      const date = parseISO(event.timing.start_datetime);
+      const existingGroup = groups.find(g => isSameDay(g.date, date));
+      if (existingGroup) {
+        existingGroup.events.push(event);
+      } else {
+        groups.push({ date, events: [event] });
       }
-
-      console.log('📡 [Realtime] Initializing for user:', session.user.id)
-
-      // Clean up previous channel if it exists
-      if (channel) {
-        console.log('🔄 [Realtime] Cleaning up old channel before restart')
-        supabase.removeChannel(channel)
-      }
-
-      // Create a fresh channel
-      // We use a unique name each time to avoid cache/stale issues
-      const channelName = `itinerary-debug-${Date.now()}`
-      channel = supabase.channel(channelName)
-
-      console.log('📡 [Realtime] Subscribing to ALL changes on "trips" table for debug...')
-
-      channel
-        .on(
-          'postgres_changes',
-          {
-            event: '*', // Listen for EVERYTHING (Insert, Update, Delete)
-            schema: 'public',
-            table: 'trips',
-            // REMOVING FILTER TEMPORARILY FOR DEBUG
-          },
-          (payload: any) => {
-            console.log('🚨 [Realtime] EVENT DETECTED!', payload.eventType, payload)
-
-            // Check if the user_id matches manually in the callback
-            const payloadUserId = payload.new?.user_id || payload.old?.user_id
-            if (payloadUserId === session.user.id) {
-              console.log('✅ [Realtime] Match found for current user. Refreshing...')
-              fetchTrips()
-            } else {
-              console.log('ℹ️ [Realtime] Event detected but for different user:', payloadUserId)
-            }
-          }
-        )
-        .subscribe((status: string) => {
-          console.log('🌐 [Realtime] Status:', status, 'on debug channel:', channelName)
-          setRealtimeStatus(status)
-          if (status === 'CHANNEL_ERROR') {
-            console.error('❌ [Realtime] Subscription failed. Action required: Enable Realtime for the "trips" table in Supabase Dashboard (Replication -> supabase_realtime).')
-          }
-        })
-    }
-
-    fetchTrips()
-    setupSubscription()
-
-    return () => {
-      if (channel) {
-        console.log('🔌 [Realtime] Cleaning up...')
-        supabase.removeChannel(channel)
-      }
-    }
-  }, [])
+    });
+    return groups;
+  }, [flattenedEvents]);
 
   return (
-    <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-      <div className="flex items-center justify-between border-b border-border px-6 py-4">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent/15">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent-foreground"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" /></svg>
-          </div>
-          <h2 className="text-sm font-semibold tracking-wide uppercase text-card-foreground">My Itinerary</h2>
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{validTrips.length} items</span>
-          <div className="flex items-center gap-1.5 ml-2" title={`Real-time sync: ${realtimeStatus}`}>
-            <div className={`h-1.5 w-1.5 rounded-full ${realtimeStatus === 'SUBSCRIBED' ? 'bg-green-500 animate-pulse' : 'bg-amber-500'}`} />
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">Live</span>
-          </div>
+    <section className="rounded-2xl border border-border bg-card/50 backdrop-blur-sm shadow-xl p-8">
+      <div className="mb-10 flex items-end justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight text-foreground">My Travels</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {flattenedEvents.length} events across {groupedByDay.length} days
+          </p>
         </div>
-        <button
-          onClick={() => setIsCreating(true)}
-          className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
-          Add Event
-        </button>
       </div>
 
-      <div className="flex flex-col gap-8 p-6">
+      <div className="space-y-12">
         {loading ? (
-          <div className="flex items-center justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
-        ) : validTrips.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">No trips yet. Try parsing an email!</div>
+          <div className="flex items-center justify-center py-20">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          </div>
+        ) : groupedByDay.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="mb-4 rounded-full bg-secondary p-4">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><circle cx="12" cy="12" r="10" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
+            </div>
+            <h3 className="text-lg font-semibold">No plans yet</h3>
+            <p className="mt-1 text-sm text-muted-foreground max-w-xs">
+              Upload a travel confirmation or paste an email above to see your itinerary.
+            </p>
+          </div>
         ) : (
-          (Object.entries(
-            validTrips.reduce((acc, trip) => {
-              const event = trip.parsed_data?.events?.[0];
-              if (!event) return acc;
-
-              // Use event start date or fallback to created_at
-              const rawDate = event.timing?.start_datetime || trip.created_at;
-              // Format: "Monday, October 23, 2026"
-              const dateObj = new Date(rawDate);
-              const dateKey = dateObj.toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              });
-
-              if (!acc[dateKey]) acc[dateKey] = [];
-              acc[dateKey].push({ ...trip, _sortTime: dateObj.getTime() });
-              return acc;
-            }, {} as Record<string, any[]>)
-          ) as [string, any[]][]).sort((a: any, b: any) => {
-            // Sort days chronologically based on the first item in the group
-            return (a[1][0]._sortTime - b[1][0]._sortTime);
-          }).map(([dateHeader, dayTrips]: [string, any[]]) => (
-            <DaySection key={dateHeader} date={dateHeader}>
-              <div className="flex flex-col gap-4">
-                {dayTrips.map((trip: any) => {
-                  const data = trip.parsed_data;
-                  const event = data.events?.[0];
-
-                  // Collect rich details
-                  const cardDetails = [
-                    // Verification
-                    ...(event.confirmation?.pnr ? [{ label: "PNR", value: event.confirmation.pnr }] : []),
-                    ...(event.confirmation?.confirmation_code ? [{ label: "Confirmation", value: event.confirmation.confirmation_code }] : []),
-                    ...(event.confirmation?.ticket_number ? [{ label: "Ticket", value: event.confirmation.ticket_number }] : []),
-
-                    { label: "Provider", value: event.provider?.name || "N/A" },
-
-                    // Sub-locations
-                    ...(event.location?.sub_location?.terminal ? [{ label: "Terminal", value: event.location.sub_location.terminal }] : []),
-                    ...(event.location?.sub_location?.gate ? [{ label: "Gate", value: event.location.sub_location.gate }] : []),
-                    ...(event.location?.sub_location?.platform ? [{ label: "Platform", value: event.location.sub_location.platform }] : []),
-                    ...(event.location?.sub_location?.room ? [{ label: "Room", value: event.location.sub_location.room }] : []),
-                    ...(event.location?.sub_location?.table ? [{ label: "Table", value: event.location.sub_location.table }] : []),
-
-                    ...(event.location?.address ? [{ label: "Address", value: event.location.address }] : []),
-                    ...(event.location?.phone ? [{ label: "Phone", value: event.location.phone }] : []),
-
-                    // Operational info
-                    ...(event.operational_info?.party_size ? [{ label: "Party Size", value: event.operational_info.party_size.toString() }] : []),
-                    ...(event.operational_info?.check_in_window ? [{ label: "Check-in", value: event.operational_info.check_in_window }] : []),
-                    ...(event.operational_info?.items ? [{ label: "Items", value: event.operational_info.items.join(", ") }] : []),
-
-                    // Financials
-                    ...(event.cost?.total_amount ? [{ label: "Total", value: `${event.cost.total_amount} ${event.cost.currency || 'USD'}${event.cost.payment_status === 'paid' ? ' (Paid)' : ''}` }] : []),
-                  ];
-
-                  // Determine color based on UTO group
-                  const getCategoryColor = (t: string): string => {
-                    if (!t) return 'blue';
-                    const lowT = t.toLowerCase();
-                    if (['flight', 'train', 'bus', 'ferry', 'car_rental', 'public_transit', 'taxi'].includes(lowT)) return 'blue';
-                    if (['hotel', 'vacation_rental', 'hostel', 'cruise', 'camping', 'lodging'].includes(lowT)) return 'green';
-                    if (['restaurant', 'bar', 'food_tour', 'dining', 'dining_reservation'].includes(lowT)) return 'rose';
-                    if (['tour', 'attraction', 'performance', 'wellness'].includes(lowT)) return 'amber';
-                    if (['border_control', 'health', 'meeting', 'note'].includes(lowT)) return 'indigo';
-                    return 'amber'; // fallback
-                  };
-
-                  return (
-                    <ItineraryCard
-                      key={trip.id}
-                      title={trip.trip_name}
-                      savedDate={new Date(trip.created_at).toLocaleDateString()}
-                      type={event.event_type}
-                      typeColor={getCategoryColor(event.event_type)}
-                      datetime={event.timing?.start_datetime ? new Date(event.timing.start_datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "All Day"}
-                      location={event.location?.name || "Unknown"}
-                      onEdit={() => setEditingTrip(trip)}
-                      onDelete={() => handleDelete(trip.id)}
-                      details={cardDetails}
-                      milestones={event.milestones}
-                    />
-                  );
-                })}
+          groupedByDay.map((group) => (
+            <div key={group.date.toISOString()}>
+              <div className="mb-6 flex items-center gap-4">
+                <div className="flex flex-col items-center justify-center rounded-xl bg-primary px-3 py-2 text-primary-foreground shadow-lg">
+                  <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">{format(group.date, "MMM")}</span>
+                  <span className="text-xl font-black">{format(group.date, "dd")}</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">{format(group.date, "EEEE, MMMM do")}</h3>
+                  <div className="h-1 w-12 rounded-full bg-primary/30 mt-1" />
+                </div>
               </div>
-            </DaySection>
+
+              <div className="ml-7 flex flex-col pt-2">
+                {group.events.map((event) => (
+                  <ItineraryCard
+                    key={event.event_id}
+                    event={event}
+                    onDelete={() => handleDelete(event.trip_id)}
+                  />
+                ))}
+              </div>
+            </div>
           ))
         )}
       </div>
-
-      {
-        editingTrip && (
-          <EditTripModal
-            trip={editingTrip}
-            isOpen={true}
-            onClose={() => setEditingTrip(null)}
-            onSave={handleUpdateTrip}
-          />
-        )}
-
-      {isCreating && (
-        <EditTripModal
-          isOpen={true}
-          onClose={() => setIsCreating(false)}
-          onSave={handleCreateTrip}
-        />
-      )}
     </section>
   );
 }

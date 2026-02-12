@@ -15,9 +15,9 @@ export async function POST(req: NextRequest) {
         }
 
         const key = process.env.GEMINI_API_KEY;
-        console.log("API Key Status:", key ? "Defined (ends with " + key.slice(-4) + ")" : "Undefined");
+        console.log("API Key Status:", key ? "Defined (starts with " + key.substring(0, 4) + ")" : "Undefined");
 
-        const model = 'gemini-2.5-flash-lite';
+        const model = 'gemini-2.0-flash-lite';
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
         console.log("Calling Gemini URL:", url.replace(key || "", "HIDDEN_KEY"));
 
@@ -44,25 +44,15 @@ export async function POST(req: NextRequest) {
             })
         });
 
-        console.log("Gemini Response Status:", response.status);
-        const responseText = await response.text();
-        console.log("Gemini Response Body:", responseText.substring(0, 500)); // Log first 500 chars
-
         if (!response.ok) {
+            const errorText = await response.text();
             if (response.status === 429) {
                 return NextResponse.json({ error: "Gemini AI is busy (Rate Limit). Please wait a minute and try again." }, { status: 429 });
             }
-            throw new Error(`Gemini API Error: ${response.status} - ${responseText}`);
+            throw new Error(`Gemini API Error: ${response.status} - ${errorText}`);
         }
 
-        let data;
-        try {
-            data = JSON.parse(responseText);
-        } catch (e) {
-            console.error("Failed to parse Gemini JSON:", responseText);
-            throw new Error("Invalid JSON response from Gemini");
-        }
-
+        const data = await response.json();
         return NextResponse.json(data);
 
     } catch (error: any) {
