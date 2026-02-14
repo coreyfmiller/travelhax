@@ -55,7 +55,7 @@ export function Header() {
               Travel Itinerary 5
             </h1>
             <p className="text-sm text-muted-foreground">
-              Transform confirmation emails into structured data
+              Into a structured itinerary
             </p>
           </div>
         </div>
