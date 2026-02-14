@@ -551,49 +551,62 @@ export function PageHeaderActions() {
                         </TabsContent>
 
                         <TabsContent value="manual" className="m-0 border-0 p-0">
-                            <div className="border-b border-border bg-secondary/50 px-6 py-3">
-                                <div className="flex flex-wrap items-center justify-between gap-4">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <span className="mr-1 text-xs font-medium text-muted-foreground">Samples:</span>
-                                        {sampleButtons.map((btn) => (
-                                            <button
-                                                key={btn.label}
-                                                type="button"
-                                                onClick={() => setInput(sampleEmails[btn.key])}
-                                                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-card-foreground transition-colors hover:bg-secondary"
-                                            >
-                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><path d={btn.icon} /></svg>
-                                                {btn.label}
-                                            </button>
-                                        ))}
+                            <div className="p-6">
+                                <div className="flex items-start justify-between mb-6">
+                                    <div className="space-y-3">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">Samples</span>
+                                        <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
+                                            {sampleButtons.map((btn, idx) => (
+                                                <div key={btn.key} className="flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setInput(sampleEmails[btn.key])}
+                                                        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1 text-[10px] font-bold tracking-tight text-card-foreground transition-all hover:bg-secondary hover:border-primary/30 hover:shadow-sm"
+                                                    >
+                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary/70"><path d={btn.icon} /></svg>
+                                                        {btn.label.toUpperCase()}
+                                                    </button>
+                                                    {idx < sampleButtons.length - 1 && (
+                                                        <span className="text-muted-foreground/30 font-light">&lt;</span>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                     <div className="flex gap-2">
                                         <input type="file" id="file-upload" className="hidden" accept="application/pdf" onChange={handleFile} />
-                                        <Button variant="outline" onClick={() => document.getElementById("file-upload")?.click()} className="h-8 text-xs font-bold tracking-tight px-4">
-                                            {selectedFile ? "Change PDF" : "Upload PDF"}
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => document.getElementById("file-upload")?.click()}
+                                            className="h-8 px-3 text-[10px] font-bold tracking-wider uppercase"
+                                        >
+                                            {selectedFile ? "CHANGE PDF" : "UPLOAD PDF"}
                                         </Button>
-                                        <Button onClick={handleParse} disabled={parsing} className="h-8 text-xs font-bold tracking-tight px-4">
-                                            {parsing ? "Parsing..." : "Parse It"}
+                                        <Button
+                                            onClick={handleParse}
+                                            disabled={parsing}
+                                            className="h-8 px-3 text-[10px] font-bold tracking-wider uppercase bg-primary hover:bg-primary/90 shadow-sm"
+                                        >
+                                            {parsing ? "PARSING..." : "PARSE IT"}
                                         </Button>
                                     </div>
                                 </div>
-                            </div>
-                            <div className="p-6">
+
                                 {selectedFile && (
                                     <div className="mb-4 flex items-center justify-between rounded-lg bg-primary/5 p-3 text-sm border border-primary/10">
                                         <span className="font-medium text-primary flex items-center gap-2">
-                                            <Clipboard size={14} />
-                                            Attached: {selectedFile.name}
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.51a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
+                                            Paper clipped: {selectedFile.name}
                                         </span>
-                                        <button onClick={() => setSelectedFile(null)} className="text-muted-foreground hover:text-destructive font-bold">×</button>
+                                        <button onClick={() => setSelectedFile(null)} className="text-muted-foreground hover:text-destructive transition-colors">×</button>
                                     </div>
                                 )}
                                 <textarea
-                                    rows={8}
+                                    rows={12}
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     placeholder="Paste your travel confirmation email here..."
-                                    className="w-full resize-y rounded-lg border border-border bg-background px-4 py-3 font-mono text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-inner"
+                                    className="w-full resize-y rounded-xl border border-border bg-background px-4 py-4 font-mono text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/30 focus:border-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/5 shadow-sm transition-all"
                                 />
                             </div>
                         </TabsContent>
