@@ -555,21 +555,17 @@ export function PageHeaderActions() {
                                 <div className="flex items-start justify-between mb-6">
                                     <div className="space-y-3">
                                         <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">Samples</span>
-                                        <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
-                                            {sampleButtons.map((btn, idx) => (
-                                                <div key={btn.key} className="flex items-center gap-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setInput(sampleEmails[btn.key])}
-                                                        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1 text-[10px] font-bold tracking-tight text-card-foreground transition-all hover:bg-secondary hover:border-primary/30 hover:shadow-sm"
-                                                    >
-                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary/70"><path d={btn.icon} /></svg>
-                                                        {btn.label.toUpperCase()}
-                                                    </button>
-                                                    {idx < sampleButtons.length - 1 && (
-                                                        <span className="text-muted-foreground/30 font-light">&lt;</span>
-                                                    )}
-                                                </div>
+                                        <div className="flex flex-nowrap items-center gap-1.5">
+                                            {sampleButtons.map((btn) => (
+                                                <button
+                                                    key={btn.key}
+                                                    type="button"
+                                                    onClick={() => setInput(sampleEmails[btn.key])}
+                                                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2 py-1 text-[10px] font-bold tracking-tight text-card-foreground transition-all hover:bg-secondary hover:border-primary/30 hover:shadow-sm whitespace-nowrap shrink-0"
+                                                >
+                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary/70"><path d={btn.icon} /></svg>
+                                                    {btn.label.toUpperCase()}
+                                                </button>
                                             ))}
                                         </div>
                                     </div>
