@@ -442,7 +442,7 @@ export function PageHeaderActions() {
                                 className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition-all"
                             >
                                 <Mail size={14} className="mr-2" />
-                                Setup
+                                Setup Instructions
                             </TabsTrigger>
                             <TabsTrigger
                                 value="manual"
