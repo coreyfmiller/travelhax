@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import { Header } from "@/components/header"
 import { EmailInput } from "@/components/email-input"
-import { ApprovedSenders } from "@/components/approved-senders"
+import { PageHeaderActions } from "@/components/page-header-actions"
 import { Itinerary } from "@/components/itinerary"
 import { Button } from "@/components/ui/button"
 import { User } from "@supabase/supabase-js"
@@ -45,10 +45,8 @@ export default function Page() {
     <div className="min-h-screen bg-background relative">
       <Header />
       <main className="mx-auto max-w-4xl px-4 py-8 flex flex-col gap-8">
-        {user && <ApprovedSenders />}
-
         <div className="relative">
-          <EmailInput />
+          <PageHeaderActions />
           {!user && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px] border border-dashed border-primary/20 p-8 text-center">
               <div className="mb-4 rounded-full bg-primary/10 p-3">
