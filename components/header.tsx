@@ -21,14 +21,14 @@ export function Header() {
 
   useEffect(() => {
     // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: { data: { session: any } }) => {
       setUser(session?.user ?? null)
     })
 
     // Listen for changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
       setUser(session?.user ?? null)
     })
 
@@ -42,25 +42,17 @@ export function Header() {
   return (
     <header className="border-b border-border bg-card">
       <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-primary-foreground"
-            >
-              <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
-            </svg>
+        <div className="flex items-center gap-4">
+          <div className="flex h-20 w-20 items-center justify-center overflow-hidden">
+            <img
+              src="/logo.png"
+              alt="Travel Itinerary 5 Logo"
+              className="h-full w-full object-contain"
+            />
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-card-foreground">
-              Travel Itinerary 5000
+              Travel Itinerary 5
             </h1>
             <p className="text-sm text-muted-foreground">
               Transform confirmation emails into structured data
