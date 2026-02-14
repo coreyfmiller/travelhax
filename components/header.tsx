@@ -20,6 +20,8 @@ export function Header() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
 
   useEffect(() => {
+    if (!supabase) return
+
     // Check current session
     supabase.auth.getSession().then(({ data: { session } }: { data: { session: any } }) => {
       setUser(session?.user ?? null)
@@ -36,6 +38,7 @@ export function Header() {
   }, [])
 
   const handleSignOut = async () => {
+    if (!supabase) return
     await supabase.auth.signOut()
   }
 

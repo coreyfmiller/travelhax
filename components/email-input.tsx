@@ -268,6 +268,10 @@ export function EmailInput() {
   const { toast } = useToast()
 
   const handleParse = async () => {
+    if (!supabase) {
+      toast({ title: "Configuration Error", description: "Supabase is not configured. Please check your .env.local file.", variant: "destructive" })
+      return
+    }
     if (!input && !selectedFile) {
       toast({ title: "Error", description: "Please paste an email or upload a PDF", variant: "destructive" })
       return

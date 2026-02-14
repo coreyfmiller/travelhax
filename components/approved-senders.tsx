@@ -15,6 +15,7 @@ export function ApprovedSenders() {
     const forwardingEmail = "trips@itinery5.com"
 
     const fetchSenders = async () => {
+        if (!supabase) return
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) return
 
@@ -31,6 +32,7 @@ export function ApprovedSenders() {
     }, [])
 
     const handleAddSender = async () => {
+        if (!supabase) return
         if (!newEmail) return
         setLoading(true)
 
@@ -59,6 +61,7 @@ export function ApprovedSenders() {
     }
 
     const handleDelete = async (id: string) => {
+        if (!supabase) return
         try {
             const { error } = await supabase
                 .from("user_email_senders")

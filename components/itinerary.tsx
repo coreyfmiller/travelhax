@@ -186,6 +186,10 @@ export function Itinerary() {
   const { toast } = useToast()
 
   const fetchTrips = async () => {
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
@@ -209,6 +213,7 @@ export function Itinerary() {
   }
 
   const handleDelete = async (id: string) => {
+    if (!supabase) return
     if (!confirm("Delete this trip?")) return
     try {
       const { data: { session } } = await supabase.auth.getSession()
@@ -223,6 +228,7 @@ export function Itinerary() {
   }
 
   const handleUpdateTrip = async (updatedTrip: any) => {
+    if (!supabase) return
     try {
       const { data: { session } } = await supabase.auth.getSession()
       const response = await fetch(`/api/trips/${updatedTrip.id}`, {
@@ -244,6 +250,7 @@ export function Itinerary() {
   }
 
   const handleCreateTrip = async (newTrip: any) => {
+    if (!supabase) return
     try {
       const { data: { session } } = await supabase.auth.getSession()
       const response = await fetch("/api/trips", {
@@ -273,6 +280,8 @@ export function Itinerary() {
     let channel: any;
 
     const setupSubscription = async () => {
+      if (!supabase) return
+
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         console.warn('⚠️ [Realtime] No session found, skipping subscription')
@@ -329,7 +338,7 @@ export function Itinerary() {
     setupSubscription()
 
     return () => {
-      if (channel) {
+      if (channel && supabase) {
         console.log('🔌 [Realtime] Cleaning up...')
         supabase.removeChannel(channel)
       }
@@ -362,6 +371,14 @@ export function Itinerary() {
       <div className="flex flex-col gap-8 p-6">
         {loading ? (
           <div className="flex items-center justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+        ) : !supabase ? (
+          <div className="text-center py-8">
+            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+            </div>
+            <h3 className="text-sm font-semibold text-foreground">Supabase Not Configured</h3>
+            <p className="mt-1 text-xs text-muted-foreground">Please add your environment variables to .env.local to see your itineraries.</p>
+          </div>
         ) : validTrips.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">No trips yet. Try parsing an email!</div>
         ) : (
