@@ -69,6 +69,17 @@ export default function Page() {
           )}
         </div>
       </main>
+      <footer className="py-6 text-center text-xs text-muted-foreground/50">
+        Built by{" "}
+        <a
+          href="https://www.fundylogic.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-muted-foreground transition-colors underline underline-offset-4"
+        >
+          Fundy Logic
+        </a>
+      </footer>
     </div>
   )
 }
